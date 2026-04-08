@@ -29,6 +29,4 @@ public class Usuario {
     @ManyToOne
     @JoinColumn(name = "grupo_id")
     private Grupo grupo;
-
-
 }

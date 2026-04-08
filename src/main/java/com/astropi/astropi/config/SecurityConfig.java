@@ -24,11 +24,21 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+
+    /**
+     * Bean encargado de encriptar las contraseñas usando BCrypt
+     */
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+
+        return new BCryptPasswordEncoder();
+    }
+
+
+
     /**
      * Configuración principal de seguridad HTTP.
-     *
-     * @param http objeto de configuración de Spring Security
-     * @return cadena de filtros de seguridad
      */
 
     @Bean
@@ -40,29 +50,21 @@ public class SecurityConfig {
 
                 //Config. de autorizacion endpoints
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register").permitAll() //acceso publico
+                        .requestMatchers("/auth/**").permitAll() //acceso pblico
+                        .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER","SUPER_ADMIN")
                         .anyRequest().authenticated() // el resto requiere autenticacion
                 )
-                // Configura autenticación básica (usuario/contraseña)
+                // Configura autenticación básica (usuario/contraseña) temporal para pruebas
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
 
-    /**
-     * Bean encargado de encriptar las contraseñas usando BCrypt.
-     *
-     * Spring lo utiliza automáticamente al validar credenciales.
-     */
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
-    }
 
     /**
-     * Proporciona el AuthenticationManager necesario para gestionar la autenticación.
+     * Proporciona el AuthenticationManager necesario para gestionar la autenticación manual.
      *
      * Se encarga de coordinar el proceso de login usando UserDetailsService.
      */
