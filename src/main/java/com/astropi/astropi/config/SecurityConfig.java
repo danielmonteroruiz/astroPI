@@ -69,8 +69,8 @@ public class SecurityConfig {
      * Se encarga de coordinar el proceso de login usando UserDetailsService.
      */
     @Bean
-    public AuthenticationManager authenticationManager (AuthenticationConfiguration config) throws Exception{
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager (AuthenticationConfiguration authConfig) throws Exception{
+        return authConfig.getAuthenticationManager();
     }
 
 }
