@@ -34,11 +34,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
         throws ServletException, IOException{
+        System.out.println("===== FILTRO JWT =====");
+        System.out.println("URI: " + request.getRequestURI());
 
         // 1. Obtener header Authorization
         final String authHeader = request.getHeader("Authorization");

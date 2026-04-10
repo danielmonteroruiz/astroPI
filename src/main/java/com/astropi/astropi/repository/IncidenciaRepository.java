@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
  * Repositorio para gestionar incidencias.
  */
 @Repository
-public interface IncidenciaRespository  extends JpaRepository<Incidencia, Long> {
+public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
 }
