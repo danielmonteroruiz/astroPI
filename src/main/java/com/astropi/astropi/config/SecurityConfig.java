@@ -1,5 +1,6 @@
 package com.astropi.astropi.config;
 
+import com.astropi.astropi.security.JwtAuthenticationEntryPoint;
 import com.astropi.astropi.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -52,6 +55,7 @@ public class SecurityConfig {
         http
                 //Desactiva proteccion CSRF (para pruebas en postman)
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
                 //Config. de autorizacion endpoints
                 .authorizeHttpRequests(auth -> auth
