@@ -43,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
         // 1. Obtener header Authorization
         final String authHeader = request.getHeader("Authorization");
 
+        System.out.println("Auth header: " + authHeader);
+
         String username = null;
         String token = null;
 
@@ -50,7 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
         // 2. Validar formato Bearer
         if(authHeader != null && authHeader.startsWith("Bearer ")){
             token = authHeader.substring(7);
+            System.out.println("Token: " + token);
+
             username = jwtUtil.extractUsername(token);
+            System.out.println("Username: " + username);
         }
 
         // 3. Si hay usuario y no está autenticado aún

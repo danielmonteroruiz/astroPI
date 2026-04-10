@@ -25,13 +25,18 @@ public class JwtUtil {
      * @param username usuario autenticado
      * @return token JWT firmado
      */
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username) //identifica al usuario
+                .claim("role",role)
                 .setIssuedAt(new Date()) //fecha de cracion
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) //Expira en 24h
                 .signWith(key) //firma del token
                 .compact();
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 
     /**
