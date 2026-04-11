@@ -27,15 +27,23 @@ public class IncidenciaController {
     private IncidenciaService incidenciaService;
 
     @PostMapping
-    public Incidencia crearIncidencia(@RequestBody IncidenciaRequest request,
-                                      Authentication authentication){
+    public ResponseEntity<IncidenciaResponse> crearIncidencia(@RequestBody IncidenciaRequest request,
+                                                              Authentication authentication){
+
         String username = authentication.getName();
 
-        return incidenciaService.CrearIncidencia(
+        Incidencia incidencia = incidenciaService.CrearIncidencia(
                 request.getTitulo(),
                 request.getDescripcion(),
+                request.getServicio(),
+                request.getCategoria(),
+                request.getGrupoId(),
                 username
         );
+
+        IncidenciaResponse response = incidenciaService.mapToResponse(incidencia);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/mis-incidencias")
@@ -48,5 +56,15 @@ public class IncidenciaController {
         return ResponseEntity.ok(incidencias);
     }
 
+    @GetMapping
+    public ResponseEntity<List<IncidenciaResponse>> obtenerIncidencias(Authentication authentication){
+
+        String username = authentication.getName();
+
+        List<IncidenciaResponse> incidencias =
+                incidenciaService.obtenerIncidenciasUsuarioYGrupo(username);
+
+        return ResponseEntity.ok(incidencias);
+    }
 
 }

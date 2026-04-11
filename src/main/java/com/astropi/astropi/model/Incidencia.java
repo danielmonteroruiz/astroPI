@@ -17,6 +17,12 @@ public class Incidencia {
     private long id;
 
     /**
+     * Código único del ticket (I-YYYYMMDD-XXXX).
+     */
+    @Column(unique = true)
+    private String codigoTicket;
+
+    /**
      * Título breve de la incidencia.
      */
     @Column(nullable = false)
@@ -41,6 +47,11 @@ public class Incidencia {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    private String servicio;
+    private String categoria;
+
+    @ManyToOne
+    private Grupo grupo;
     /**
      * Fecha de creación automática.
      */
@@ -63,6 +74,13 @@ public class Incidencia {
 
     public Long getId() {
         return id;
+    }
+    public String getCodigoTicket() {
+        return codigoTicket;
+    }
+
+    public void setCodigoTicket(String codigoTicket) {
+        this.codigoTicket = codigoTicket;
     }
 
     public String getTitulo() {
@@ -99,6 +117,30 @@ public class Incidencia {
 
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
+    }
+
+    public String getServicio() {
+        return servicio;
+    }
+
+    public void setServicio(String servicio) {
+        this.servicio = servicio;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
+    }
+
+    public Grupo getGrupo() {
+        return grupo;
+    }
+
+    public void setGrupo(Grupo grupo) {
+        this.grupo = grupo;
     }
 
 }
