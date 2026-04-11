@@ -7,6 +7,8 @@ import com.astropi.astropi.repository.UsuarioRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import com.astropi.astropi.controller.dto.IncidenciaResponse;
 
 /**
  * Lógica de negocio de incidencias.
@@ -29,4 +31,34 @@ public class IncidenciaService {
         return incidenciaRepository.save(incidencia);
 
     }
+
+    public List<IncidenciaResponse> obtenerMisIncidencias(String username){
+        List<Incidencia> incidencias = incidenciaRepository.findByUsuarioUsername(username);
+
+        return incidencias.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private IncidenciaResponse mapToResponse(Incidencia incidencia){
+
+        IncidenciaResponse response = new IncidenciaResponse();
+
+        response.setId(incidencia.getId());
+        response.setTitulo(incidencia.getTitulo());
+        response.setDescripcion(incidencia.getDescripcion());
+        response.setEstado(incidencia.getEstado().name());
+        response.setFechaCreacion(incidencia.getFechaCreacion());
+
+        if (incidencia.getUsuario() != null){
+            response.setUsuario(incidencia.getUsuario().getUsername());
+
+            if (incidencia.getUsuario().getGrupo() != null){
+                response.setGrupo(incidencia.getUsuario().getGrupo().getNombre());
+            }
+        }
+
+        return response;
+    }
+
 }

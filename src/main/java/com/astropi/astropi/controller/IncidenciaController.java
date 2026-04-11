@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
+import java.util.List;
+import com.astropi.astropi.controller.dto.IncidenciaResponse;
+
 import java.util.Locale;
 
 /**
@@ -32,4 +37,16 @@ public class IncidenciaController {
                 username
         );
     }
+
+    @GetMapping("/mis-incidencias")
+    public ResponseEntity<List<IncidenciaResponse>> obtenerMisIncidencias(Authentication authentication) {
+
+        String username = authentication.getName();
+
+        List<IncidenciaResponse> incidencias = incidenciaService.obtenerMisIncidencias(username);
+
+        return ResponseEntity.ok(incidencias);
+    }
+
+
 }
