@@ -16,7 +16,7 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
 
     List<Incidencia> findByUsuarioUsername(String username);
 
-    List<Incidencia> findByUsuarioUsernameOrUsuarioGrupoId(String username, Long grupoId);
+    List<Incidencia> findByUsuarioUsernameOrGrupoId(String username, Long grupoId);
 
     long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
 

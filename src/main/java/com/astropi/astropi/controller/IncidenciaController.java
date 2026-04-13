@@ -1,21 +1,18 @@
 package com.astropi.astropi.controller;
 
 
+import com.astropi.astropi.controller.dto.EstadoRequest;
 import com.astropi.astropi.controller.dto.IncidenciaRequest;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.service.IncidenciaService;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import com.astropi.astropi.controller.dto.IncidenciaResponse;
-
-import java.util.Locale;
 
 /**
  * Controlador de incidencias.
@@ -65,6 +62,22 @@ public class IncidenciaController {
                 incidenciaService.obtenerIncidenciasUsuarioYGrupo(username);
 
         return ResponseEntity.ok(incidencias);
+    }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<IncidenciaResponse> actualizarEstado(@PathVariable Long id,
+                                                               @RequestBody EstadoRequest request,
+                                                               Authentication authentication) {
+
+        String username = authentication.getName();
+
+        IncidenciaResponse incidencia = incidenciaService.actualizarEstado(
+                id,
+                request.getEstado(),
+                username
+        );
+
+        return ResponseEntity.ok(incidencia);
     }
 
 }

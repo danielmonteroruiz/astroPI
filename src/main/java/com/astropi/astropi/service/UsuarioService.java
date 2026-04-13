@@ -7,8 +7,10 @@ import com.astropi.astropi.repository.GrupoRepository;
 import com.astropi.astropi.repository.RolRepository;
 import com.astropi.astropi.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 /// // USER REGISTER
 
@@ -35,8 +37,13 @@ public class UsuarioService {
 
     public Usuario SaveUser(Usuario usuario){
 
+        if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya existe");
+        }
+
         //encrypt password
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        usuario.setActivo(true);
 
         //rol assign
         Rol rol = rolRepository.findByNombre("USER")

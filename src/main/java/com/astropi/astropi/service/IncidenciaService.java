@@ -1,6 +1,7 @@
 package com.astropi.astropi.service;
 
 import com.astropi.astropi.model.Grupo;
+import com.astropi.astropi.model.EstadoIncidencia;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
@@ -8,11 +9,14 @@ import com.astropi.astropi.repository.IncidenciaRepository;
 import com.astropi.astropi.repository.UsuarioRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import com.astropi.astropi.controller.dto.IncidenciaResponse;
 
 /**
@@ -96,13 +100,15 @@ public class IncidenciaService {
         response.setEstado(incidencia.getEstado().name());
         response.setFechaCreacion(incidencia.getFechaCreacion());
         response.setCodigoTicket(incidencia.getCodigoTicket());
+        response.setServicio(incidencia.getServicio());
+        response.setCategoria(incidencia.getCategoria());
 
         if (incidencia.getUsuario() != null){
             response.setUsuario(incidencia.getUsuario().getUsername());
+        }
 
-            if (incidencia.getUsuario().getGrupo() != null){
-                response.setGrupo(incidencia.getUsuario().getGrupo().getNombre());
-            }
+        if (incidencia.getGrupo() != null){
+            response.setGrupo(incidencia.getGrupo().getNombre());
         }
 
         return response;
@@ -118,11 +124,48 @@ public class IncidenciaService {
         Long grupoId = usuario.getGrupo().getId();
 
         List<Incidencia> incidencias = incidenciaRepository
-                .findByUsuarioUsernameOrUsuarioGrupoId(username, grupoId);
+                .findByUsuarioUsernameOrGrupoId(username, grupoId);
 
         return incidencias.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    /// ///
+    public IncidenciaResponse actualizarEstado(Long incidenciaId, String estado, String username) {
+
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        Incidencia incidencia = incidenciaRepository.findById(incidenciaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Incidencia no encontrada"));
+
+        if (!puedeGestionarIncidencia(usuario, incidencia)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes modificar esta incidencia");
+        }
+
+        try {
+            EstadoIncidencia nuevoEstado = EstadoIncidencia.valueOf(estado.toUpperCase(Locale.ROOT));
+            incidencia.setEstado(nuevoEstado);
+        } catch (IllegalArgumentException | NullPointerException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de incidencia no valido");
+        }
+
+        Incidencia incidenciaActualizada = incidenciaRepository.save(incidencia);
+
+        return mapToResponse(incidenciaActualizada);
+    }
+
+    private boolean puedeGestionarIncidencia(Usuario usuario, Incidencia incidencia) {
+
+        boolean esCreador = incidencia.getUsuario() != null
+                && incidencia.getUsuario().getUsername().equals(usuario.getUsername());
+
+        boolean mismoGrupo = usuario.getGrupo() != null
+                && incidencia.getGrupo() != null
+                && incidencia.getGrupo().getId().equals(usuario.getGrupo().getId());
+
+        return esCreador || mismoGrupo;
     }
 
 

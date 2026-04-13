@@ -2,6 +2,7 @@ package com.astropi.astropi.controller;
 
 import com.astropi.astropi.controller.dto.LoginRequest;
 import com.astropi.astropi.controller.dto.LoginResponse;
+import com.astropi.astropi.controller.dto.RegisterRequest;
 import com.astropi.astropi.controller.dto.UserResponse;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.security.JwtUtil;
@@ -9,11 +10,9 @@ import com.astropi.astropi.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 
 /**
  * Controlador de autenticación.
@@ -28,6 +27,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
 
     /**
@@ -58,6 +60,25 @@ public class AuthController {
 
         return new LoginResponse(token);
 
+    }
+
+    @PostMapping("/register")
+    public UserResponse register(@RequestBody RegisterRequest request) {
+
+        Usuario usuario = new Usuario();
+        usuario.setUsername(request.getUsername());
+        usuario.setNombre(request.getNombre());
+        usuario.setApellidos(request.getApellidos());
+        usuario.setEmail(request.getEmail());
+        usuario.setDni(request.getDni());
+        usuario.setPassword(request.getPassword());
+
+        Usuario usuarioRegistrado = usuarioService.SaveUser(usuario);
+
+        return new UserResponse(
+                usuarioRegistrado.getUsername(),
+                "ROLE_" + usuarioRegistrado.getRol().getNombre()
+        );
     }
 
     @GetMapping("/me")

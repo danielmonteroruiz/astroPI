@@ -8,6 +8,7 @@ public enum EstadoIncidencia {
     ABIERTA,
     EN_PROCESO,
     PARADA,
-    RESUELTA
+    RESUELTA,
+    CERRADA
 
 }
