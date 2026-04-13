@@ -42,10 +42,10 @@ public class IncidenciaService {
                                       String username){
 
         Usuario usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         Grupo grupo = grupoRepository.findById(grupoId)
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo no encontrado"));
 
         Incidencia incidencia = new Incidencia(titulo, descripcion, usuario);
 
@@ -119,12 +119,14 @@ public class IncidenciaService {
     public List<IncidenciaResponse> obtenerIncidenciasUsuarioYGrupo(String username){
 
         Usuario usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        Long grupoId = usuario.getGrupo().getId();
+        if (usuario.getGrupo() == null) {
+            return obtenerMisIncidencias(username);
+        }
 
         List<Incidencia> incidencias = incidenciaRepository
-                .findByUsuarioUsernameOrGrupoId(username, grupoId);
+                .findByUsuarioUsernameOrGrupoId(username, usuario.getGrupo().getId());
 
         return incidencias.stream()
                 .map(this::mapToResponse)
@@ -146,6 +148,7 @@ public class IncidenciaService {
 
         try {
             EstadoIncidencia nuevoEstado = EstadoIncidencia.valueOf(estado.toUpperCase(Locale.ROOT));
+            validarCambioEstado(incidencia.getEstado(), nuevoEstado);
             incidencia.setEstado(nuevoEstado);
         } catch (IllegalArgumentException | NullPointerException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de incidencia no valido");
@@ -166,6 +169,13 @@ public class IncidenciaService {
                 && incidencia.getGrupo().getId().equals(usuario.getGrupo().getId());
 
         return esCreador || mismoGrupo;
+    }
+
+    private void validarCambioEstado(EstadoIncidencia estadoActual, EstadoIncidencia nuevoEstado) {
+
+        if (estadoActual == EstadoIncidencia.CERRADA && nuevoEstado != EstadoIncidencia.CERRADA) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Una incidencia cerrada no puede reabrirse");
+        }
     }
 
 

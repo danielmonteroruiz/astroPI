@@ -6,6 +6,7 @@ import com.astropi.astropi.controller.dto.IncidenciaRequest;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.service.IncidenciaService;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class IncidenciaController {
     private IncidenciaService incidenciaService;
 
     @PostMapping
-    public ResponseEntity<IncidenciaResponse> crearIncidencia(@RequestBody IncidenciaRequest request,
+    public ResponseEntity<IncidenciaResponse> crearIncidencia(@Valid @RequestBody IncidenciaRequest request,
                                                               Authentication authentication){
 
         String username = authentication.getName();
@@ -66,7 +67,7 @@ public class IncidenciaController {
 
     @PutMapping("/{id}/estado")
     public ResponseEntity<IncidenciaResponse> actualizarEstado(@PathVariable Long id,
-                                                               @RequestBody EstadoRequest request,
+                                                               @Valid @RequestBody EstadoRequest request,
                                                                Authentication authentication) {
 
         String username = authentication.getName();

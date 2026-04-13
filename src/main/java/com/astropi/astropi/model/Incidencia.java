@@ -1,7 +1,6 @@
 package com.astropi.astropi.model;
 
 import jakarta.persistence.*;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
@@ -25,7 +24,7 @@ public class Incidencia {
     /**
      * Título breve de la incidencia.
      */
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String titulo;
 
     /**
@@ -47,10 +46,14 @@ public class Incidencia {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    @Column(nullable = false, length = 100)
     private String servicio;
+
+    @Column(nullable = false, length = 100)
     private String categoria;
 
     @ManyToOne
+    @JoinColumn(name = "grupo_id", nullable = false)
     private Grupo grupo;
     /**
      * Fecha de creación automática.
