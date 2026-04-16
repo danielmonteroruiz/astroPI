@@ -301,6 +301,14 @@ POST /admin/grupos
 
 `POST /admin/grupos` requiere rol `SUPER_ADMIN`.
 
+### Administracion de usuarios
+
+```http
+GET /admin/usuarios
+```
+
+Requiere rol `SUPER_ADMIN`.
+
 ---
 
 ## Estados de incidencia
@@ -331,6 +339,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `EstadoPeticionRequest`
 - `GrupoRequest`
 - `GrupoResponse`
+- `AdminUsuarioResponse`
 
 ---
 
@@ -455,6 +464,32 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
 {
   "nombre": "Soporte"
 }
+```
+
+### Listar usuarios como administrador
+
+```http
+GET /admin/usuarios
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Respuesta:
+
+```json
+[
+  {
+    "id": 1,
+    "username": "admin2",
+    "nombre": "Admin",
+    "apellidos": "Dos",
+    "email": "admin2@astropi.com",
+    "dni": "12345678A",
+    "activo": true,
+    "rol": "USER",
+    "grupo": "Desarrollo"
+  }
+]
 ```
 
 Respuesta:
@@ -622,7 +657,7 @@ Actualmente hay pruebas para:
 | Backend incidencias | Implementado |
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
-| Backend usuarios | En progreso |
+| Backend usuarios | En progreso: listado admin implementado |
 | Backend grupos | En progreso: listado y creacion implementados |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -634,7 +669,7 @@ Actualmente hay pruebas para:
 
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
-- Completar gestion de usuarios.
+- Completar gestion de usuarios: asignar grupo, activar/desactivar y cambiar rol.
 - Completar gestion de grupos: editar, eliminar y asignar usuarios.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
