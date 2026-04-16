@@ -1,8 +1,8 @@
 package com.astropi.astropi.controller;
 
 
-import com.astropi.astropi.controller.dto.EstadoRequest;
-import com.astropi.astropi.controller.dto.IncidenciaRequest;
+import com.astropi.astropi.controller.dto.incidencia.EstadoRequest;
+import com.astropi.astropi.controller.dto.incidencia.IncidenciaRequest;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.service.IncidenciaService;
 
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.http.ResponseEntity;
 import java.util.List;
-import com.astropi.astropi.controller.dto.IncidenciaResponse;
+import com.astropi.astropi.controller.dto.incidencia.IncidenciaResponse;
 
 /**
  * Controlador de incidencias.

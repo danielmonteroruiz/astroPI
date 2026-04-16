@@ -1,6 +1,6 @@
 package com.astropi.astropi.service;
 
-import com.astropi.astropi.controller.dto.AdminUsuarioResponse;
+import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Rol;
 import com.astropi.astropi.model.Usuario;

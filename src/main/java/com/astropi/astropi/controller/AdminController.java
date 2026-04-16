@@ -1,8 +1,8 @@
 package com.astropi.astropi.controller;
 
-import com.astropi.astropi.controller.dto.AdminUsuarioResponse;
-import com.astropi.astropi.controller.dto.GrupoRequest;
-import com.astropi.astropi.controller.dto.GrupoResponse;
+import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
+import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
+import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.service.GrupoService;
 import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;

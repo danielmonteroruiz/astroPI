@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import com.astropi.astropi.controller.dto.IncidenciaResponse;
+import com.astropi.astropi.controller.dto.incidencia.IncidenciaResponse;
 
 /**
  * Lógica de negocio de incidencias.

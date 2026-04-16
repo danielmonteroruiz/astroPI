@@ -1,4 +1,4 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.peticion;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -6,9 +6,9 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 /**
- * DTO para crear una incidencia.
+ * DTO para crear una peticion.
  */
-public class IncidenciaRequest {
+public class PeticionRequest {
 
     @NotBlank(message = "El titulo es obligatorio")
     @Size(max = 150, message = "El titulo no puede superar 150 caracteres")
@@ -34,36 +34,36 @@ public class IncidenciaRequest {
         return titulo;
     }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public String getServicio() {
-        return servicio;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public Long getGrupoId() {
-        return grupoId;
-    }
-
     public void setTitulo(String titulo) {
         this.titulo = titulo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
 
+    public String getServicio() {
+        return servicio;
+    }
+
     public void setServicio(String servicio) {
         this.servicio = servicio;
     }
 
+    public String getCategoria() {
+        return categoria;
+    }
+
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public Long getGrupoId() {
+        return grupoId;
     }
 
     public void setGrupoId(Long grupoId) {

@@ -1,6 +1,6 @@
 package com.astropi.astropi.service;
 
-import com.astropi.astropi.controller.dto.PeticionResponse;
+import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
 import com.astropi.astropi.model.EstadoPeticion;
 import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Peticion;

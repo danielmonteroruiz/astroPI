@@ -1,4 +1,4 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.incidencia;
 
 import com.astropi.astropi.model.EstadoIncidencia;
 import jakarta.validation.constraints.NotNull;

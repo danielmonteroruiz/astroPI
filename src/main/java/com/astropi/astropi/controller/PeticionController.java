@@ -1,8 +1,8 @@
 package com.astropi.astropi.controller;
 
-import com.astropi.astropi.controller.dto.EstadoPeticionRequest;
-import com.astropi.astropi.controller.dto.PeticionRequest;
-import com.astropi.astropi.controller.dto.PeticionResponse;
+import com.astropi.astropi.controller.dto.peticion.EstadoPeticionRequest;
+import com.astropi.astropi.controller.dto.peticion.PeticionRequest;
+import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
 import com.astropi.astropi.model.Peticion;
 import com.astropi.astropi.service.PeticionService;
 import jakarta.validation.Valid;

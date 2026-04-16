@@ -1,6 +1,6 @@
 package com.astropi.astropi.service;
 
-import com.astropi.astropi.controller.dto.GrupoResponse;
+import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.repository.GrupoRepository;
 import org.springframework.beans.factory.annotation.Autowired;

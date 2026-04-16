@@ -1,11 +1,10 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.incidencia;
 
 import java.time.LocalDateTime;
 
-public class PeticionResponse {
-
+public class IncidenciaResponse {
     private Long id;
-    private String codigoTicket;
+    private String codigoTicket; // I-2026XXXX-0001
     private String titulo;
     private String descripcion;
     private String servicio;
@@ -14,6 +13,8 @@ public class PeticionResponse {
     private String grupo;
     private String usuario;
     private LocalDateTime fechaCreacion;
+
+    // 🔹 GETTERS Y SETTERS
 
     public Long getId() {
         return id;

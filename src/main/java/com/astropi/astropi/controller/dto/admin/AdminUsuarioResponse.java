@@ -1,4 +1,4 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.admin;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 

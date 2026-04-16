@@ -1,22 +1,22 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.peticion;
 
-import com.astropi.astropi.model.EstadoIncidencia;
+import com.astropi.astropi.model.EstadoPeticion;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class EstadoRequestTest {
+class EstadoPeticionRequestTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void deberiaAceptarEstadoCerrada() throws Exception {
-        EstadoRequest request = objectMapper.readValue(
+        EstadoPeticionRequest request = objectMapper.readValue(
                 "{\"estado\":\"CERRADA\"}",
-                EstadoRequest.class
+                EstadoPeticionRequest.class
         );
 
-        assertThat(request.getEstado()).isEqualTo(EstadoIncidencia.CERRADA);
+        assertThat(request.getEstado()).isEqualTo(EstadoPeticion.CERRADA);
     }
 }

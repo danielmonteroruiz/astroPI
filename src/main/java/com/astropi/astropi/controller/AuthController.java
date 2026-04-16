@@ -1,9 +1,9 @@
 package com.astropi.astropi.controller;
 
-import com.astropi.astropi.controller.dto.LoginRequest;
-import com.astropi.astropi.controller.dto.LoginResponse;
-import com.astropi.astropi.controller.dto.RegisterRequest;
-import com.astropi.astropi.controller.dto.UserResponse;
+import com.astropi.astropi.controller.dto.auth.LoginRequest;
+import com.astropi.astropi.controller.dto.auth.LoginResponse;
+import com.astropi.astropi.controller.dto.auth.RegisterRequest;
+import com.astropi.astropi.controller.dto.auth.UserResponse;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.security.JwtUtil;
 import com.astropi.astropi.service.UsuarioService;

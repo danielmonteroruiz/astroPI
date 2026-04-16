@@ -1,4 +1,4 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.auth;
 
 /**
  * DTO que devuelve el token JWT al cliente.

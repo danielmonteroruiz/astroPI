@@ -1,4 +1,4 @@
-package com.astropi.astropi.controller.dto;
+package com.astropi.astropi.controller.dto.auth;
 
 /**
  * DTO para registrar un usuario nuevo.
