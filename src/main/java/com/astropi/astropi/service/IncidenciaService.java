@@ -16,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import com.astropi.astropi.controller.dto.IncidenciaResponse;
 
 /**
@@ -134,7 +133,7 @@ public class IncidenciaService {
     }
 
     /// ///
-    public IncidenciaResponse actualizarEstado(Long incidenciaId, String estado, String username) {
+    public IncidenciaResponse actualizarEstado(Long incidenciaId, EstadoIncidencia nuevoEstado, String username) {
 
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
@@ -146,13 +145,8 @@ public class IncidenciaService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes modificar esta incidencia");
         }
 
-        try {
-            EstadoIncidencia nuevoEstado = EstadoIncidencia.valueOf(estado.toUpperCase(Locale.ROOT));
-            validarCambioEstado(incidencia.getEstado(), nuevoEstado);
-            incidencia.setEstado(nuevoEstado);
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de incidencia no valido");
-        }
+        validarCambioEstado(incidencia.getEstado(), nuevoEstado);
+        incidencia.setEstado(nuevoEstado);
 
         Incidencia incidenciaActualizada = incidenciaRepository.save(incidencia);
 

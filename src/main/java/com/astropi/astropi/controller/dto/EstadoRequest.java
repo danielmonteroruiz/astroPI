@@ -1,25 +1,21 @@
 package com.astropi.astropi.controller.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import com.astropi.astropi.model.EstadoIncidencia;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * DTO para cambiar el estado de una incidencia.
  */
 public class EstadoRequest {
 
-    @NotBlank(message = "El estado es obligatorio")
-    @Pattern(
-            regexp = "ABIERTA|EN_PROCESO|PARADA|RESUELTA|CERRADA",
-            message = "El estado debe ser ABIERTA, EN_PROCESO, PARADA, RESUELTA o CERRADA"
-    )
-    private String estado;
+    @NotNull(message = "El estado es obligatorio")
+    private EstadoIncidencia estado;
 
-    public String getEstado() {
+    public EstadoIncidencia getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoIncidencia estado) {
         this.estado = estado;
     }
 }
