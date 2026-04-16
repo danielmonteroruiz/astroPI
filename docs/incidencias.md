@@ -1,0 +1,120 @@
+# Bloque de Incidencias
+
+## Estado actual
+
+El bloque de incidencias permite:
+
+- Crear incidencias autenticadas.
+- Listar incidencias propias.
+- Listar incidencias propias y del grupo del usuario.
+- Cambiar el estado de una incidencia.
+- Validar los datos de entrada con Bean Validation.
+- Proteger los endpoints con JWT.
+
+## Endpoints
+
+### Crear incidencia
+
+```http
+POST /incidencias
+```
+
+Body:
+
+```json
+{
+  "titulo": "Error al iniciar sesion",
+  "descripcion": "El usuario no puede acceder a la aplicacion",
+  "servicio": "Autenticacion",
+  "categoria": "Bug",
+  "grupoId": 1
+}
+```
+
+### Ver mis incidencias
+
+```http
+GET /incidencias/mis-incidencias
+```
+
+### Ver incidencias accesibles por usuario y grupo
+
+```http
+GET /incidencias
+```
+
+### Cambiar estado
+
+```http
+PUT /incidencias/{id}/estado
+```
+
+Body:
+
+```json
+{
+  "estado": "CERRADA"
+}
+```
+
+Estados permitidos:
+
+- `ABIERTA`
+- `EN_PROCESO`
+- `PARADA`
+- `RESUELTA`
+- `CERRADA`
+
+## Seguridad
+
+Todos los endpoints de incidencias requieren JWT.
+
+En Postman:
+
+- Authorization: `Bearer Token`
+- Token: pegar solo el JWT, sin escribir `Bearer` delante.
+
+## Validaciones
+
+`IncidenciaRequest` valida:
+
+- `titulo`: obligatorio, maximo 150 caracteres.
+- `descripcion`: obligatoria, maximo 1000 caracteres.
+- `servicio`: obligatorio, maximo 100 caracteres.
+- `categoria`: obligatoria, maximo 100 caracteres.
+- `grupoId`: obligatorio y positivo.
+
+`EstadoRequest` valida:
+
+- `estado`: obligatorio y debe coincidir con un valor de `EstadoIncidencia`.
+
+## Nota para DBeaver y PostgreSQL
+
+Si se anade un nuevo estado al enum Java, PostgreSQL puede mantener una constraint antigua en la tabla `incidencias`.
+
+Ejemplo real:
+
+```text
+ERROR: el nuevo registro para la relacion "incidencias" viola la restriccion "incidencias_estado_check"
+```
+
+Esto ocurre porque `spring.jpa.hibernate.ddl-auto=update` no siempre actualiza constraints existentes.
+
+En DBeaver, abrir un SQL Editor sobre la base de datos `astroPI_DB` y ejecutar:
+
+```sql
+ALTER TABLE incidencias
+DROP CONSTRAINT IF EXISTS incidencias_estado_check;
+
+ALTER TABLE incidencias
+ADD CONSTRAINT incidencias_estado_check
+CHECK (estado IN ('ABIERTA', 'EN_PROCESO', 'PARADA', 'RESUELTA', 'CERRADA'));
+```
+
+Despues de ejecutar el SQL, probar de nuevo:
+
+```json
+{
+  "estado": "CERRADA"
+}
+```
