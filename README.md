@@ -130,7 +130,7 @@ Campos:
 - `id`
 - `nombre`
 
-Estado: implementado. Falta gestion completa desde endpoints administrativos.
+Estado: implementado. Ya existe consulta de grupos y creacion desde admin. Falta edicion, eliminacion y asignaciones avanzadas.
 
 ### Incidencia
 
@@ -252,6 +252,8 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Listado de peticiones por usuario.
 - Listado de peticiones por usuario y grupo.
 - Cambio de estado de peticiones.
+- Consulta de grupos.
+- Creacion de grupos desde admin.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
 - Validaciones con Bean Validation.
@@ -288,6 +290,17 @@ GET /peticiones
 PUT /peticiones/{id}/estado
 ```
 
+### Grupos
+
+```http
+GET /grupos
+POST /admin/grupos
+```
+
+`GET /grupos` requiere usuario autenticado.
+
+`POST /admin/grupos` requiere rol `SUPER_ADMIN`.
+
 ---
 
 ## Estados de incidencia
@@ -316,6 +329,8 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `PeticionRequest`
 - `PeticionResponse`
 - `EstadoPeticionRequest`
+- `GrupoRequest`
+- `GrupoResponse`
 
 ---
 
@@ -406,6 +421,39 @@ Requiere token JWT.
   "servicio": "Accesos",
   "categoria": "Alta de permisos",
   "grupoId": 1
+}
+```
+
+### Listar grupos
+
+```http
+GET /grupos
+```
+
+Requiere token JWT.
+
+Respuesta:
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Desarrollo"
+  }
+]
+```
+
+### Crear grupo
+
+```http
+POST /admin/grupos
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "nombre": "Soporte"
 }
 ```
 
@@ -575,7 +623,7 @@ Actualmente hay pruebas para:
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
-| Backend grupos | En progreso |
+| Backend grupos | En progreso: listado y creacion implementados |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
 | Frontend React | Pendiente |
@@ -587,7 +635,7 @@ Actualmente hay pruebas para:
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
 - Completar gestion de usuarios.
-- Completar gestion de grupos.
+- Completar gestion de grupos: editar, eliminar y asignar usuarios.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
 - Preparar coleccion de Postman.

@@ -68,6 +68,7 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").hasAnyRole("USER","SUPER_ADMIN")
                         .requestMatchers("/incidencias/**").authenticated()
                         .requestMatchers("/peticiones/**").authenticated()
+                        .requestMatchers("/grupos/**").authenticated()
                         .anyRequest().authenticated() // el resto requiere autenticacion
                 )
                 // Configura autenticación básica (usuario/contraseña) temporal para pruebas
