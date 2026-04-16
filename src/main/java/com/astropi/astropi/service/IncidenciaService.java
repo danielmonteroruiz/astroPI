@@ -21,6 +21,7 @@ import com.astropi.astropi.controller.dto.IncidenciaResponse;
 /**
  * Lógica de negocio de incidencias.
  */
+
 @Service
 public class IncidenciaService {
 
