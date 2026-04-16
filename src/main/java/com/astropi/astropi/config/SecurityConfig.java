@@ -2,11 +2,13 @@ package com.astropi.astropi.config;
 
 import com.astropi.astropi.security.JwtAuthenticationEntryPoint;
 import com.astropi.astropi.security.JwtAuthenticationFilter;
+import com.astropi.astropi.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -61,6 +63,7 @@ public class SecurityConfig {
                 //Config. de autorizacion endpoints
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() //acceso pblico
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/user/**").hasAnyRole("USER","SUPER_ADMIN")
                         .requestMatchers("/incidencias/**").authenticated()
@@ -81,8 +84,12 @@ public class SecurityConfig {
      * Se encarga de coordinar el proceso de login usando UserDetailsService.
      */
     @Bean
-    public AuthenticationManager authenticationManager (AuthenticationConfiguration authConfig) throws Exception{
-        return authConfig.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(CustomUserDetailsService userDetailsService,
+                                                       PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(provider);
     }
 
 

@@ -6,6 +6,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,5 +41,15 @@ public class GlobalExceptionHandler {
         response.put("mensaje", "Revisa el formato del body y los valores enviados");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("error", ex.getStatusCode().toString());
+        response.put("mensaje", ex.getReason());
+
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 }
