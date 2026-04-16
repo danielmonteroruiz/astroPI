@@ -13,6 +13,7 @@ AstroPI implementa un backend que permite:
 - Autenticacion de usuarios mediante JWT.
 - Registro basico de usuarios.
 - Creacion y gestion de incidencias.
+- Creacion y gestion de peticiones.
 - Control de acceso por usuario y grupo.
 - Generacion automatica de identificadores de ticket.
 - Cambio de estado de incidencias.
@@ -150,13 +151,13 @@ Estado: implementado.
 
 ### Peticion
 
-Funcionara de forma similar a incidencia, con codigo automatico:
+Funciona de forma similar a incidencia, con codigo automatico:
 
 ```text
 P-YYYYMMDD-0001
 ```
 
-Estado: pendiente.
+Estado: implementado en backend.
 
 ### Permiso
 
@@ -199,7 +200,7 @@ El sistema esta pensado para gestionar dos tipos de tickets:
 - Incidencias.
 - Peticiones.
 
-Actualmente el modulo de incidencias esta implementado. El modulo de peticiones queda pendiente.
+Actualmente los modulos de incidencias y peticiones estan implementados en backend.
 
 Cada ticket incluye:
 
@@ -246,6 +247,11 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Listado de incidencias por usuario.
 - Listado de incidencias por usuario y grupo.
 - Cambio de estado de incidencias.
+- Creacion de peticiones.
+- Generacion automatica de codigo de peticion.
+- Listado de peticiones por usuario.
+- Listado de peticiones por usuario y grupo.
+- Cambio de estado de peticiones.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
 - Validaciones con Bean Validation.
@@ -273,6 +279,15 @@ GET /incidencias
 PUT /incidencias/{id}/estado
 ```
 
+### Peticiones
+
+```http
+POST /peticiones
+GET /peticiones/mis-peticiones
+GET /peticiones
+PUT /peticiones/{id}/estado
+```
+
 ---
 
 ## Estados de incidencia
@@ -298,6 +313,9 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `IncidenciaRequest`
 - `IncidenciaResponse`
 - `EstadoRequest`
+- `PeticionRequest`
+- `PeticionResponse`
+- `EstadoPeticionRequest`
 
 ---
 
@@ -373,6 +391,41 @@ Requiere token JWT.
 }
 ```
 
+### Crear peticion
+
+```http
+POST /peticiones
+```
+
+Requiere token JWT.
+
+```json
+{
+  "titulo": "Solicitar nuevo acceso",
+  "descripcion": "Necesito acceso al panel de reporting",
+  "servicio": "Accesos",
+  "categoria": "Alta de permisos",
+  "grupoId": 1
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 1,
+  "codigoTicket": "P-20260416-0001",
+  "titulo": "Solicitar nuevo acceso",
+  "descripcion": "Necesito acceso al panel de reporting",
+  "servicio": "Accesos",
+  "categoria": "Alta de permisos",
+  "estado": "ABIERTA",
+  "grupo": "Desarrollo",
+  "usuario": "admin2",
+  "fechaCreacion": "2026-04-16T20:15:00"
+}
+```
+
 ---
 
 ## Validaciones
@@ -393,6 +446,23 @@ Validaciones actuales:
 
 - `estado`: obligatorio.
 - Debe coincidir con un valor del enum `EstadoIncidencia`.
+
+### PeticionRequest
+
+Validaciones actuales:
+
+- `titulo`: obligatorio, maximo 150 caracteres.
+- `descripcion`: obligatoria, maximo 1000 caracteres.
+- `servicio`: obligatorio, maximo 100 caracteres.
+- `categoria`: obligatoria, maximo 100 caracteres.
+- `grupoId`: obligatorio y positivo.
+
+### EstadoPeticionRequest
+
+Validaciones actuales:
+
+- `estado`: obligatorio.
+- Debe coincidir con un valor del enum `EstadoPeticion`.
 
 Ejemplo de error de validacion:
 
@@ -442,6 +512,12 @@ CHECK (estado IN ('ABIERTA', 'EN_PROCESO', 'PARADA', 'RESUELTA', 'CERRADA'));
 
 Este script se puede ejecutar desde el SQL Editor de DBeaver.
 
+Para peticiones existe tambien:
+
+```text
+docs/database/peticiones_estado_check.sql
+```
+
 ---
 
 ## Instalacion y ejecucion
@@ -484,6 +560,7 @@ Actualmente hay pruebas para:
 
 - Carga del contexto de Spring Boot.
 - Deserializacion del estado `CERRADA` en `EstadoRequest`.
+- Deserializacion del estado `CERRADA` en `EstadoPeticionRequest`.
 
 ---
 
@@ -499,7 +576,7 @@ Actualmente hay pruebas para:
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
 | Backend grupos | En progreso |
-| Backend peticiones | Pendiente |
+| Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
 | Frontend React | Pendiente |
 
@@ -507,8 +584,8 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Implementar modulo de peticiones.
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
+- Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
 - Completar gestion de usuarios.
 - Completar gestion de grupos.
 - Crear sistema de permisos granular.
