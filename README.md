@@ -288,6 +288,10 @@ GET /auth/me
 POST /incidencias
 GET /incidencias/mis-incidencias
 GET /incidencias
+GET /incidencias?estado=ABIERTA
+GET /incidencias?servicio=Autenticacion
+GET /incidencias?categoria=Bug
+GET /incidencias?grupoId=1
 PUT /incidencias/{id}/estado
 ```
 
@@ -297,6 +301,10 @@ PUT /incidencias/{id}/estado
 POST /peticiones
 GET /peticiones/mis-peticiones
 GET /peticiones
+GET /peticiones?estado=ABIERTA
+GET /peticiones?servicio=Accesos
+GET /peticiones?categoria=Alta%20de%20permisos
+GET /peticiones?grupoId=1
 PUT /peticiones/{id}/estado
 ```
 
@@ -437,6 +445,27 @@ Requiere token JWT.
 }
 ```
 
+### Filtrar incidencias
+
+```http
+GET /incidencias?estado=ABIERTA
+GET /incidencias?servicio=Autenticacion
+GET /incidencias?categoria=Bug
+GET /incidencias?grupoId=1
+GET /incidencias?estado=ABIERTA&grupoId=1
+```
+
+Requiere token JWT.
+
+Filtros disponibles:
+
+- `estado`: valor del enum `EstadoIncidencia`.
+- `servicio`: coincidencia exacta sin distinguir mayusculas/minusculas.
+- `categoria`: coincidencia exacta sin distinguir mayusculas/minusculas.
+- `grupoId`: id del grupo.
+
+Las incidencias devueltas siguen respetando el acceso del usuario autenticado: incidencias propias o de su grupo.
+
 ### Crear peticion
 
 ```http
@@ -471,6 +500,27 @@ Respuesta:
   "fechaCreacion": "2026-04-16T20:15:00"
 }
 ```
+
+### Filtrar peticiones
+
+```http
+GET /peticiones?estado=ABIERTA
+GET /peticiones?servicio=Accesos
+GET /peticiones?categoria=Alta%20de%20permisos
+GET /peticiones?grupoId=1
+GET /peticiones?estado=ABIERTA&grupoId=1
+```
+
+Requiere token JWT.
+
+Filtros disponibles:
+
+- `estado`: valor del enum `EstadoPeticion`.
+- `servicio`: coincidencia exacta sin distinguir mayusculas/minusculas.
+- `categoria`: coincidencia exacta sin distinguir mayusculas/minusculas.
+- `grupoId`: id del grupo.
+
+Las peticiones devueltas siguen respetando el acceso del usuario autenticado: peticiones propias o de su grupo.
 
 ### Listar grupos
 
@@ -911,8 +961,8 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
-- Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
+- Completar filtros avanzados de incidencias por fecha.
+- Completar filtros avanzados de peticiones por fecha.
 - Completar gestion de usuarios: eliminar si procede y revisar cambio de password.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.

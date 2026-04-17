@@ -8,13 +8,17 @@ import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
 import com.astropi.astropi.repository.PeticionRepository;
 import com.astropi.astropi.repository.UsuarioRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -75,21 +79,80 @@ public class PeticionService {
                 .toList();
     }
 
-    public List<PeticionResponse> obtenerPeticionesUsuarioYGrupo(String username) {
+    public List<PeticionResponse> obtenerPeticionesUsuarioYGrupo(String username,
+                                                                 EstadoPeticion estado,
+                                                                 String servicio,
+                                                                 String categoria,
+                                                                 Long grupoId) {
 
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-        if (usuario.getGrupo() == null) {
-            return obtenerMisPeticiones(username);
-        }
+        Specification<Peticion> filtros = crearFiltrosPeticiones(
+                usuario,
+                estado,
+                servicio,
+                categoria,
+                grupoId
+        );
 
-        List<Peticion> peticiones = peticionRepository
-                .findByUsuarioUsernameOrGrupoId(username, usuario.getGrupo().getId());
+        List<Peticion> peticiones = peticionRepository.findAll(
+                filtros,
+                Sort.by(Sort.Direction.DESC, "fechaCreacion")
+        );
 
         return peticiones.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    private Specification<Peticion> crearFiltrosPeticiones(Usuario usuario,
+                                                           EstadoPeticion estado,
+                                                           String servicio,
+                                                           String categoria,
+                                                           Long grupoId) {
+
+        return (root, query, criteriaBuilder) -> {
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
+
+            if (usuario.getGrupo() != null) {
+                Predicate mismoGrupo = criteriaBuilder.equal(root.get("grupo").get("id"), usuario.getGrupo().getId());
+                predicates.add(criteriaBuilder.or(esCreador, mismoGrupo));
+            } else {
+                predicates.add(esCreador);
+            }
+
+            if (estado != null) {
+                predicates.add(criteriaBuilder.equal(root.get("estado"), estado));
+            }
+
+            if (tieneTexto(servicio)) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("servicio")),
+                        servicio.toLowerCase()
+                ));
+            }
+
+            if (tieneTexto(categoria)) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("categoria")),
+                        categoria.toLowerCase()
+                ));
+            }
+
+            if (grupoId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("grupo").get("id"), grupoId));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    private boolean tieneTexto(String valor) {
+        return valor != null && !valor.isBlank();
     }
 
     public PeticionResponse actualizarEstado(Long peticionId, EstadoPeticion nuevoEstado, String username) {

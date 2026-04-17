@@ -3,6 +3,7 @@ package com.astropi.astropi.controller;
 
 import com.astropi.astropi.controller.dto.incidencia.EstadoIncidenciaRequest;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaRequest;
+import com.astropi.astropi.model.EstadoIncidencia;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.service.IncidenciaService;
 
@@ -55,12 +56,23 @@ public class IncidenciaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncidenciaResponse>> obtenerIncidencias(Authentication authentication){
+    public ResponseEntity<List<IncidenciaResponse>> obtenerIncidencias(
+            @RequestParam(required = false) EstadoIncidencia estado,
+            @RequestParam(required = false) String servicio,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) Long grupoId,
+            Authentication authentication){
 
         String username = authentication.getName();
 
         List<IncidenciaResponse> incidencias =
-                incidenciaService.obtenerIncidenciasUsuarioYGrupo(username);
+                incidenciaService.obtenerIncidenciasUsuarioYGrupo(
+                        username,
+                        estado,
+                        servicio,
+                        categoria,
+                        grupoId
+                );
 
         return ResponseEntity.ok(incidencias);
     }

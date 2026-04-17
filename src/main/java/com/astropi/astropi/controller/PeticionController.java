@@ -3,6 +3,7 @@ package com.astropi.astropi.controller;
 import com.astropi.astropi.controller.dto.peticion.EstadoPeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
+import com.astropi.astropi.model.EstadoPeticion;
 import com.astropi.astropi.model.Peticion;
 import com.astropi.astropi.service.PeticionService;
 import jakarta.validation.Valid;
@@ -54,12 +55,23 @@ public class PeticionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PeticionResponse>> obtenerPeticiones(Authentication authentication) {
+    public ResponseEntity<List<PeticionResponse>> obtenerPeticiones(
+            @RequestParam(required = false) EstadoPeticion estado,
+            @RequestParam(required = false) String servicio,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) Long grupoId,
+            Authentication authentication) {
 
         String username = authentication.getName();
 
         List<PeticionResponse> peticiones =
-                peticionService.obtenerPeticionesUsuarioYGrupo(username);
+                peticionService.obtenerPeticionesUsuarioYGrupo(
+                        username,
+                        estado,
+                        servicio,
+                        categoria,
+                        grupoId
+                );
 
         return ResponseEntity.ok(peticiones);
     }

@@ -1,10 +1,24 @@
 package com.astropi.astropi.controller.dto.incidencia;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.time.LocalDateTime;
 
+@JsonPropertyOrder({
+        "id",
+        "codigoTicket",
+        "titulo",
+        "descripcion",
+        "servicio",
+        "categoria",
+        "estado",
+        "grupo",
+        "usuario",
+        "fechaCreacion"
+})
 public class IncidenciaResponse {
     private Long id;
-    private String codigoTicket; // I-2026XXXX-0001
+    private String codigoTicket;
     private String titulo;
     private String descripcion;
     private String servicio;

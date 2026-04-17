@@ -1,7 +1,21 @@
 package com.astropi.astropi.controller.dto.peticion;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.time.LocalDateTime;
 
+@JsonPropertyOrder({
+        "id",
+        "codigoTicket",
+        "titulo",
+        "descripcion",
+        "servicio",
+        "categoria",
+        "estado",
+        "grupo",
+        "usuario",
+        "fechaCreacion"
+})
 public class PeticionResponse {
 
     private Long id;
