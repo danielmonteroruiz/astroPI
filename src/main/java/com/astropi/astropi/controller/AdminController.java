@@ -39,6 +39,24 @@ public class AdminController {
         return ResponseEntity.ok(grupo);
     }
 
+    @PutMapping("/grupos/{id}")
+    public ResponseEntity<GrupoResponse> actualizarGrupo(
+            @PathVariable Long id,
+            @Valid @RequestBody GrupoRequest request) {
+
+        GrupoResponse grupo = grupoService.actualizarGrupo(id, request.getNombre());
+
+        return ResponseEntity.ok(grupo);
+    }
+
+    @DeleteMapping("/grupos/{id}")
+    public ResponseEntity<Void> eliminarGrupo(@PathVariable Long id) {
+
+        grupoService.eliminarGrupo(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/usuarios")
     public ResponseEntity<List<AdminUsuarioResponse>> obtenerUsuarios() {
         return ResponseEntity.ok(usuarioService.obtenerUsuariosAdmin());

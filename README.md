@@ -298,11 +298,13 @@ PUT /peticiones/{id}/estado
 ```http
 GET /grupos
 POST /admin/grupos
+PUT /admin/grupos/{id}
+DELETE /admin/grupos/{id}
 ```
 
 `GET /grupos` requiere usuario autenticado.
 
-`POST /admin/grupos` requiere rol `SUPER_ADMIN`.
+Los endpoints `/admin/grupos` requieren rol `SUPER_ADMIN`.
 
 ### Administracion de usuarios
 
@@ -493,6 +495,45 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
   "nombre": "Soporte"
 }
 ```
+
+### Editar grupo
+
+```http
+PUT /admin/grupos/2
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "nombre": "Soporte Nivel 1"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 2,
+  "nombre": "Soporte Nivel 1"
+}
+```
+
+### Eliminar grupo
+
+```http
+DELETE /admin/grupos/2
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Si el grupo no tiene usuarios, incidencias ni peticiones asociadas, devuelve:
+
+```http
+204 No Content
+```
+
+Si el grupo tiene datos asociados, devuelve `409 Conflict` con un mensaje claro.
 
 ### Listar usuarios como administrador
 
@@ -783,7 +824,7 @@ Actualmente hay pruebas para:
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
 | Backend admin usuarios | En progreso: listado, asignacion de grupo, asignacion de rol y activacion implementados |
-| Backend grupos | En progreso: listado y creacion implementados |
+| Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
 | Frontend React | Pendiente |
@@ -795,7 +836,7 @@ Actualmente hay pruebas para:
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
 - Completar gestion de usuarios: editar datos y eliminar si procede.
-- Completar gestion de grupos: editar, eliminar y asignar usuarios.
+- Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
 - Preparar coleccion de Postman.

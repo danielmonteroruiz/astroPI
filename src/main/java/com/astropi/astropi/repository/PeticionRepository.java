@@ -18,4 +18,6 @@ public interface PeticionRepository extends JpaRepository<Peticion, Long> {
     List<Peticion> findByUsuarioUsernameOrGrupoId(String username, Long grupoId);
 
     long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
+
+    boolean existsByGrupoId(Long grupoId);
 }

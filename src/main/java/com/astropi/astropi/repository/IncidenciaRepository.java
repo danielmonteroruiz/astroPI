@@ -20,4 +20,6 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
 
     long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
 
+    boolean existsByGrupoId(Long grupoId);
+
 }
