@@ -43,13 +43,14 @@ public class UsuarioService {
 
     public Usuario registrarUsuario(Usuario usuario){
 
-        if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya existe");
-        }
+        validarUsernameDisponible(usuario.getUsername(), null);
+        validarEmailDisponible(usuario.getEmail(), null);
+        validarDniDisponible(usuario.getDni(), null);
 
         //encrypt password
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setActivo(true);
+        usuario.setEmail(normalizarTextoOpcional(usuario.getEmail()));
 
         //rol assign
         Rol rol = rolRepository.findByNombre("USER")
@@ -180,7 +181,7 @@ public class UsuarioService {
 
     private void validarUsernameDisponible(String username, Long usuarioId) {
         usuarioRepository.findByUsername(username)
-                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .filter(usuarioExistente -> esOtroUsuario(usuarioExistente, usuarioId))
                 .ifPresent(usuarioExistente -> {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya existe");
                 });
@@ -195,7 +196,7 @@ public class UsuarioService {
         }
 
         usuarioRepository.findByEmail(emailNormalizado)
-                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .filter(usuarioExistente -> esOtroUsuario(usuarioExistente, usuarioId))
                 .ifPresent(usuarioExistente -> {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya existe");
                 });
@@ -203,10 +204,14 @@ public class UsuarioService {
 
     private void validarDniDisponible(String dni, Long usuarioId) {
         usuarioRepository.findByDni(dni)
-                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .filter(usuarioExistente -> esOtroUsuario(usuarioExistente, usuarioId))
                 .ifPresent(usuarioExistente -> {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "El dni ya existe");
                 });
+    }
+
+    private boolean esOtroUsuario(Usuario usuarioExistente, Long usuarioId) {
+        return usuarioId == null || !usuarioExistente.getId().equals(usuarioId);
     }
 
     private String normalizarTextoOpcional(String valor) {

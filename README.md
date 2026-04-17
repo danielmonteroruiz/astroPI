@@ -190,6 +190,13 @@ El registro basico permite enviar:
 
 El usuario se guarda con password encriptada mediante BCrypt.
 
+Reglas actuales:
+
+- No se permite registrar un `username` duplicado.
+- No se permite registrar un `dni` duplicado.
+- No se permite registrar un `email` duplicado si se envia.
+- Si `email` llega vacio, se guarda como `null`.
+
 ---
 
 ## Sistema de tickets
