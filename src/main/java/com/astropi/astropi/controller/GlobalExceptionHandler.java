@@ -3,6 +3,8 @@ package com.astropi.astropi.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -121,5 +123,25 @@ public class GlobalExceptionHandler {
         response.put("mensaje", ex.getReason());
 
         return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentials() {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("error", "Credenciales invalidas");
+        response.put("mensaje", "Username o password incorrectos");
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<Map<String, Object>> handleDisabledUser() {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("error", "Usuario desactivado");
+        response.put("mensaje", "El usuario no esta activo");
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 }

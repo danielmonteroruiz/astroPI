@@ -731,6 +731,24 @@ Respuesta:
 
 ## Validaciones
 
+### LoginRequest
+
+Validaciones actuales:
+
+- `username`: obligatorio, maximo 50 caracteres.
+- `password`: obligatoria, entre 6 y 100 caracteres.
+
+### RegisterRequest
+
+Validaciones actuales:
+
+- `username`: obligatorio, maximo 50 caracteres.
+- `nombre`: obligatorio, maximo 100 caracteres.
+- `apellidos`: obligatorio, maximo 150 caracteres.
+- `email`: opcional, formato email valido si se envia, maximo 150 caracteres.
+- `dni`: obligatorio, maximo 20 caracteres.
+- `password`: obligatoria, entre 6 y 100 caracteres.
+
 ### IncidenciaRequest
 
 Validaciones actuales:

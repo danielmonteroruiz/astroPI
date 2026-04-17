@@ -7,6 +7,7 @@ import com.astropi.astropi.controller.dto.auth.UserResponse;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.security.JwtUtil;
 import com.astropi.astropi.service.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,7 +42,7 @@ public class AuthController {
      * 3. Se devuelve el token al cliente
      */
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request){
+    public LoginResponse login(@Valid @RequestBody LoginRequest request){
         //1. Autenticación
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -61,7 +62,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public UserResponse register(@RequestBody RegisterRequest request) {
+    public UserResponse register(@Valid @RequestBody RegisterRequest request) {
 
         Usuario usuario = new Usuario();
         usuario.setUsername(request.getUsername());
