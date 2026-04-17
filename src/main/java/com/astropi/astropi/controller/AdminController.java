@@ -2,6 +2,8 @@ package com.astropi.astropi.controller;
 
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
+import com.astropi.astropi.controller.dto.admin.AsignarRolRequest;
+import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
@@ -42,12 +44,27 @@ public class AdminController {
         return ResponseEntity.ok(usuarioService.obtenerUsuariosAdmin());
     }
 
+    @GetMapping("/roles")
+    public ResponseEntity<List<RolResponse>> obtenerRoles() {
+        return ResponseEntity.ok(usuarioService.obtenerRolesAdmin());
+    }
+
     @PutMapping("/usuarios/{id}/grupo")
     public ResponseEntity<AdminUsuarioResponse> asignarGrupo(
             @PathVariable Long id,
             @Valid @RequestBody AsignarGrupoRequest request) {
 
         AdminUsuarioResponse usuario = usuarioService.asignarGrupo(id, request.getGrupoId());
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @PutMapping("/usuarios/{id}/rol")
+    public ResponseEntity<AdminUsuarioResponse> asignarRol(
+            @PathVariable Long id,
+            @Valid @RequestBody AsignarRolRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.asignarRol(id, request.getRolId());
 
         return ResponseEntity.ok(usuario);
     }

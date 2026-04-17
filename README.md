@@ -118,7 +118,6 @@ Estado: implementado.
 Roles previstos:
 
 - `USER`
-- `ADMIN`
 - `SUPER_ADMIN`
 
 Estado: implementado a nivel de entidad y seguridad base.
@@ -256,6 +255,7 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Creacion de grupos desde admin.
 - Listado de usuarios desde admin.
 - Asignacion de grupo a usuarios desde admin.
+- Asignacion de rol a usuarios desde admin.
 - Activacion y desactivacion de usuarios desde admin.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
@@ -308,7 +308,9 @@ POST /admin/grupos
 
 ```http
 GET /admin/usuarios
+GET /admin/roles
 PUT /admin/usuarios/{id}/grupo
+PUT /admin/usuarios/{id}/rol
 PUT /admin/usuarios/{id}/activo
 ```
 
@@ -346,6 +348,8 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `GrupoResponse`
 - `AdminUsuarioResponse`
 - `AsignarGrupoRequest`
+- `AsignarRolRequest`
+- `RolResponse`
 - `UsuarioActivoRequest`
 
 ---
@@ -516,6 +520,29 @@ Respuesta:
 ]
 ```
 
+### Listar roles como administrador
+
+```http
+GET /admin/roles
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Respuesta esperada:
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "SUPER_ADMIN"
+  },
+  {
+    "id": 2,
+    "nombre": "USER"
+  }
+]
+```
+
 ### Asignar grupo a usuario
 
 ```http
@@ -527,6 +554,36 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
 ```json
 {
   "grupoId": 2
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 5,
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "usuario1@astropi.com",
+  "dni": "12345678A",
+  "activo": true,
+  "rol": "USER",
+  "grupo": "Soporte"
+}
+```
+
+### Asignar rol a usuario
+
+```http
+PUT /admin/usuarios/5/rol
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "rolId": 2
 }
 ```
 
@@ -725,7 +782,7 @@ Actualmente hay pruebas para:
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
-| Backend admin usuarios | En progreso: listado, asignacion de grupo y activacion implementados |
+| Backend admin usuarios | En progreso: listado, asignacion de grupo, asignacion de rol y activacion implementados |
 | Backend grupos | En progreso: listado y creacion implementados |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -737,7 +794,7 @@ Actualmente hay pruebas para:
 
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
-- Completar gestion de usuarios: cambiar rol, editar datos y eliminar si procede.
+- Completar gestion de usuarios: editar datos y eliminar si procede.
 - Completar gestion de grupos: editar, eliminar y asignar usuarios.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
