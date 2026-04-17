@@ -93,7 +93,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
-    public AdminUsuarioResponse asignarRol(Long usuarioId, Long rolId) {
+    public AdminUsuarioResponse asignarRol(Long usuarioId, Long rolId, String usernameAdmin) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
@@ -105,16 +105,20 @@ public class UsuarioService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol no permitido");
         }
 
+        validarCambioRolSeguro(usuario, rol, usernameAdmin);
+
         usuario.setRol(rol);
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
 
         return mapToAdminResponse(usuarioActualizado);
     }
 
-    public AdminUsuarioResponse actualizarActivo(Long usuarioId, Boolean activo) {
+    public AdminUsuarioResponse actualizarActivo(Long usuarioId, Boolean activo, String usernameAdmin) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        validarCambioActivoSeguro(usuario, activo, usernameAdmin);
 
         usuario.setActivo(activo);
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
@@ -147,6 +151,43 @@ public class UsuarioService {
 
     private boolean esRolPermitido(Rol rol) {
         return rol != null && ROLES_PERMITIDOS.contains(rol.getNombre());
+    }
+
+    private void validarCambioRolSeguro(Usuario usuario, Rol nuevoRol, String usernameAdmin) {
+
+        boolean esMismoUsuario = usuario.getUsername().equals(usernameAdmin);
+        boolean quitaSuperAdmin = esSuperAdmin(usuario) && !"SUPER_ADMIN".equals(nuevoRol.getNombre());
+
+        if (esMismoUsuario && quitaSuperAdmin) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes quitarte tu propio rol SUPER_ADMIN");
+        }
+
+        if (quitaSuperAdmin && esUltimoSuperAdminActivo()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe existir al menos un SUPER_ADMIN activo");
+        }
+    }
+
+    private void validarCambioActivoSeguro(Usuario usuario, Boolean activo, String usernameAdmin) {
+
+        if (Boolean.TRUE.equals(activo)) {
+            return;
+        }
+
+        if (usuario.getUsername().equals(usernameAdmin)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes desactivar tu propio usuario");
+        }
+
+        if (esSuperAdmin(usuario) && esUltimoSuperAdminActivo()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe existir al menos un SUPER_ADMIN activo");
+        }
+    }
+
+    private boolean esSuperAdmin(Usuario usuario) {
+        return usuario.getRol() != null && "SUPER_ADMIN".equals(usuario.getRol().getNombre());
+    }
+
+    private boolean esUltimoSuperAdminActivo() {
+        return usuarioRepository.countByRolNombreAndActivoTrue("SUPER_ADMIN") <= 1;
     }
 
     private RolResponse mapToRolResponse(Rol rol) {

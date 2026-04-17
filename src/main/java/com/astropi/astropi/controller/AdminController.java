@@ -12,6 +12,7 @@ import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,6 @@ public class AdminController {
 
     @Autowired
     private UsuarioService usuarioService;
-
-    //Endpoint prueba para admin
-    @GetMapping("/test")
-    public String testAdmin() {
-        return "Acceso permitido a SUPER_ADMIN";
-    }
 
     @PostMapping("/grupos")
     public ResponseEntity<GrupoResponse> crearGrupo(@Valid @RequestBody GrupoRequest request) {
@@ -80,9 +75,14 @@ public class AdminController {
     @PutMapping("/usuarios/{id}/rol")
     public ResponseEntity<AdminUsuarioResponse> asignarRol(
             @PathVariable Long id,
-            @Valid @RequestBody AsignarRolRequest request) {
+            @Valid @RequestBody AsignarRolRequest request,
+            Authentication authentication) {
 
-        AdminUsuarioResponse usuario = usuarioService.asignarRol(id, request.getRolId());
+        AdminUsuarioResponse usuario = usuarioService.asignarRol(
+                id,
+                request.getRolId(),
+                authentication.getName()
+        );
 
         return ResponseEntity.ok(usuario);
     }
@@ -90,9 +90,14 @@ public class AdminController {
     @PutMapping("/usuarios/{id}/activo")
     public ResponseEntity<AdminUsuarioResponse> actualizarActivo(
             @PathVariable Long id,
-            @Valid @RequestBody UsuarioActivoRequest request) {
+            @Valid @RequestBody UsuarioActivoRequest request,
+            Authentication authentication) {
 
-        AdminUsuarioResponse usuario = usuarioService.actualizarActivo(id, request.getActivo());
+        AdminUsuarioResponse usuario = usuarioService.actualizarActivo(
+                id,
+                request.getActivo(),
+                authentication.getName()
+        );
 
         return ResponseEntity.ok(usuario);
     }

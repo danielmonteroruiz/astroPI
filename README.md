@@ -628,6 +628,11 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
 }
 ```
 
+Reglas de seguridad:
+
+- Un `SUPER_ADMIN` no puede quitarse a si mismo el rol `SUPER_ADMIN`.
+- No se permite dejar el sistema sin ningun `SUPER_ADMIN` activo.
+
 Respuesta:
 
 ```json
@@ -657,6 +662,11 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
   "activo": false
 }
 ```
+
+Reglas de seguridad:
+
+- Un `SUPER_ADMIN` no puede desactivar su propio usuario.
+- No se permite desactivar al ultimo `SUPER_ADMIN` activo.
 
 Respuesta:
 
@@ -823,7 +833,7 @@ Actualmente hay pruebas para:
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
-| Backend admin usuarios | En progreso: listado, asignacion de grupo, asignacion de rol y activacion implementados |
+| Backend admin usuarios | En progreso: listado, asignacion de grupo, asignacion de rol, activacion y autoproteccion implementados |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
