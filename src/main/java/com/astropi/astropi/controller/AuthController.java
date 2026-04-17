@@ -51,8 +51,6 @@ public class AuthController {
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        //DEBUG
-        System.out.println(userDetails.getAuthorities());
 
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
@@ -73,7 +71,7 @@ public class AuthController {
         usuario.setDni(request.getDni());
         usuario.setPassword(request.getPassword());
 
-        Usuario usuarioRegistrado = usuarioService.SaveUser(usuario);
+        Usuario usuarioRegistrado = usuarioService.registrarUsuario(usuario);
 
         return new UserResponse(
                 usuarioRegistrado.getUsername(),
@@ -84,13 +82,10 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse getCurrentUser(Authentication authentication){
 
-        // DEBUG
-        System.out.println("Authentication: " + authentication);
-
-        //username desde el token
+        // Username obtenido desde el token JWT.
         String username = authentication.getName();
 
-        //Rol desde el token
+        // Rol obtenido desde el token JWT.
         String role = authentication.getAuthorities()
                 .iterator()
                 .next()

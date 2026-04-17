@@ -1,7 +1,7 @@
 package com.astropi.astropi.controller;
 
 
-import com.astropi.astropi.controller.dto.incidencia.EstadoRequest;
+import com.astropi.astropi.controller.dto.incidencia.EstadoIncidenciaRequest;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaRequest;
 import com.astropi.astropi.model.Incidencia;
 import com.astropi.astropi.service.IncidenciaService;
@@ -30,7 +30,7 @@ public class IncidenciaController {
 
         String username = authentication.getName();
 
-        Incidencia incidencia = incidenciaService.CrearIncidencia(
+        Incidencia incidencia = incidenciaService.crearIncidencia(
                 request.getTitulo(),
                 request.getDescripcion(),
                 request.getServicio(),
@@ -67,7 +67,7 @@ public class IncidenciaController {
 
     @PutMapping("/{id}/estado")
     public ResponseEntity<IncidenciaResponse> actualizarEstado(@PathVariable Long id,
-                                                               @Valid @RequestBody EstadoRequest request,
+                                                               @Valid @RequestBody EstadoIncidenciaRequest request,
                                                                Authentication authentication) {
 
         String username = authentication.getName();

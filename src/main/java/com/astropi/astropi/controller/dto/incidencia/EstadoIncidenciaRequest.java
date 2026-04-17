@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * DTO para cambiar el estado de una incidencia.
  */
-public class EstadoRequest {
+public class EstadoIncidenciaRequest {
 
     @NotNull(message = "El estado es obligatorio")
     private EstadoIncidencia estado;

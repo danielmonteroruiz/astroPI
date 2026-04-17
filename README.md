@@ -342,7 +342,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `UserResponse`
 - `IncidenciaRequest`
 - `IncidenciaResponse`
-- `EstadoRequest`
+- `EstadoIncidenciaRequest`
 - `PeticionRequest`
 - `PeticionResponse`
 - `EstadoPeticionRequest`
@@ -688,7 +688,7 @@ Validaciones actuales:
 - `categoria`: obligatoria, maximo 100 caracteres.
 - `grupoId`: obligatorio y positivo.
 
-### EstadoRequest
+### EstadoIncidenciaRequest
 
 Validaciones actuales:
 
@@ -807,7 +807,7 @@ Ejecutar tests:
 Actualmente hay pruebas para:
 
 - Carga del contexto de Spring Boot.
-- Deserializacion del estado `CERRADA` en `EstadoRequest`.
+- Deserializacion del estado `CERRADA` en `EstadoIncidenciaRequest`.
 - Deserializacion del estado `CERRADA` en `EstadoPeticionRequest`.
 
 ---

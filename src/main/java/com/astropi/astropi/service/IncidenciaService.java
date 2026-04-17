@@ -35,8 +35,7 @@ public class IncidenciaService {
     @Autowired
     private GrupoRepository grupoRepository;
 
-    /// ///
-    public Incidencia CrearIncidencia(String titulo, String descripcion,
+    public Incidencia crearIncidencia(String titulo, String descripcion,
                                       String servicio, String categoria,
                                       Long grupoId,
                                       String username){
@@ -58,7 +57,6 @@ public class IncidenciaService {
 
         return incidenciaRepository.save(incidencia);
     }
-    /// ///
     private String generarCodigoTicket(){
 
         LocalDateTime ahora = LocalDateTime.now();
@@ -81,7 +79,6 @@ public class IncidenciaService {
     }
 
 
-    /// ///
     public List<IncidenciaResponse> obtenerMisIncidencias(String username){
         List<Incidencia> incidencias = incidenciaRepository.findByUsuarioUsername(username);
 
@@ -89,7 +86,6 @@ public class IncidenciaService {
                 .map(this::mapToResponse)
                 .toList();
     }
-    /// ///
     public IncidenciaResponse mapToResponse(Incidencia incidencia){
 
         IncidenciaResponse response = new IncidenciaResponse();
@@ -115,7 +111,6 @@ public class IncidenciaService {
     }
 
 
-    /// ///
     public List<IncidenciaResponse> obtenerIncidenciasUsuarioYGrupo(String username){
 
         Usuario usuario = usuarioRepository.findByUsername(username)
@@ -133,7 +128,6 @@ public class IncidenciaService {
                 .toList();
     }
 
-    /// ///
     public IncidenciaResponse actualizarEstado(Long incidenciaId, EstadoIncidencia nuevoEstado, String username) {
 
         Usuario usuario = usuarioRepository.findByUsername(username)

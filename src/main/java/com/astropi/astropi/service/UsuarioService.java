@@ -18,8 +18,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-/// // USER REGISTER
-
 @Service
 public class UsuarioService {
 
@@ -43,7 +41,7 @@ public class UsuarioService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Usuario SaveUser(Usuario usuario){
+    public Usuario registrarUsuario(Usuario usuario){
 
         if (usuarioRepository.findByUsername(usuario.getUsername()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya existe");

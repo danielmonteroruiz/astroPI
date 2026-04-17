@@ -1,8 +1,8 @@
 package com.astropi.astropi.config;
 
+import com.astropi.astropi.security.CustomUserDetailsService;
 import com.astropi.astropi.security.JwtAuthenticationEntryPoint;
 import com.astropi.astropi.security.JwtAuthenticationFilter;
-import com.astropi.astropi.security.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,30 +16,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 /**
- * Clase de configuración de seguridad de la aplicación.
+ * Configuracion principal de seguridad.
  *
- * Define:
- * - Qué endpoints están protegidos o abiertos
- * - Tipo de autenticación (Basic Auth en este caso)
- * - Configuración de encriptación de contraseñas
+ * Define endpoints publicos, endpoints protegidos, autenticacion JWT stateless
+ * y encriptacion de contrasenas con BCrypt.
  */
-
-
 @Configuration
 public class SecurityConfig {
-
-
-    /**
-     * Bean encargado de encriptar las contraseñas usando BCrypt
-     */
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
-    }
 
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -48,41 +32,41 @@ public class SecurityConfig {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
-     * Configuración principal de seguridad HTTP.
+     * Bean encargado de encriptar contrasenas usando BCrypt.
      */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
+    /**
+     * Configuracion de seguridad HTTP de la API.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                //Desactiva proteccion CSRF (para pruebas en postman)
+                // La API usa JWT stateless, por eso no necesita CSRF.
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                //Config. de autorizacion endpoints
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() //acceso pblico
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER","SUPER_ADMIN")
                         .requestMatchers("/incidencias/**").authenticated()
                         .requestMatchers("/peticiones/**").authenticated()
                         .requestMatchers("/grupos/**").authenticated()
-                        .anyRequest().authenticated() // el resto requiere autenticacion
+                        .anyRequest().authenticated()
                 )
-                // Configura autenticación básica (usuario/contraseña) temporal para pruebas
+                // Valida el token JWT antes de aplicar las reglas de autorizacion.
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-
-
     /**
-     * Proporciona el AuthenticationManager necesario para gestionar la autenticación manual.
-     *
-     * Se encarga de coordinar el proceso de login usando UserDetailsService.
+     * AuthenticationManager usado por el endpoint de login.
      */
     @Bean
     public AuthenticationManager authenticationManager(CustomUserDetailsService userDetailsService,
@@ -92,7 +76,4 @@ public class SecurityConfig {
 
         return new ProviderManager(provider);
     }
-
-
-
 }

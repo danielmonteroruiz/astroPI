@@ -6,15 +6,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class EstadoRequestTest {
+class EstadoIncidenciaRequestTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void deberiaAceptarEstadoCerrada() throws Exception {
-        EstadoRequest request = objectMapper.readValue(
+        EstadoIncidenciaRequest request = objectMapper.readValue(
                 "{\"estado\":\"CERRADA\"}",
-                EstadoRequest.class
+                EstadoIncidenciaRequest.class
         );
 
         assertThat(request.getEstado()).isEqualTo(EstadoIncidencia.CERRADA);
