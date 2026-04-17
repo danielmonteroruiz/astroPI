@@ -69,6 +69,31 @@ public class UsuarioService {
                 .toList();
     }
 
+    public AdminUsuarioResponse asignarGrupo(Long usuarioId, Long grupoId) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        Grupo grupo = grupoRepository.findById(grupoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo no encontrado"));
+
+        usuario.setGrupo(grupo);
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+
+        return mapToAdminResponse(usuarioActualizado);
+    }
+
+    public AdminUsuarioResponse actualizarActivo(Long usuarioId, Boolean activo) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        usuario.setActivo(activo);
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+
+        return mapToAdminResponse(usuarioActualizado);
+    }
+
     private AdminUsuarioResponse mapToAdminResponse(Usuario usuario) {
 
         AdminUsuarioResponse response = new AdminUsuarioResponse();

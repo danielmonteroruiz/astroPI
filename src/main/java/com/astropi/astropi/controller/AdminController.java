@@ -1,6 +1,8 @@
 package com.astropi.astropi.controller;
 
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
+import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
+import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.service.GrupoService;
@@ -38,5 +40,25 @@ public class AdminController {
     @GetMapping("/usuarios")
     public ResponseEntity<List<AdminUsuarioResponse>> obtenerUsuarios() {
         return ResponseEntity.ok(usuarioService.obtenerUsuariosAdmin());
+    }
+
+    @PutMapping("/usuarios/{id}/grupo")
+    public ResponseEntity<AdminUsuarioResponse> asignarGrupo(
+            @PathVariable Long id,
+            @Valid @RequestBody AsignarGrupoRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.asignarGrupo(id, request.getGrupoId());
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @PutMapping("/usuarios/{id}/activo")
+    public ResponseEntity<AdminUsuarioResponse> actualizarActivo(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioActivoRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.actualizarActivo(id, request.getActivo());
+
+        return ResponseEntity.ok(usuario);
     }
 }

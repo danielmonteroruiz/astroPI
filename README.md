@@ -254,6 +254,9 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Cambio de estado de peticiones.
 - Consulta de grupos.
 - Creacion de grupos desde admin.
+- Listado de usuarios desde admin.
+- Asignacion de grupo a usuarios desde admin.
+- Activacion y desactivacion de usuarios desde admin.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
 - Validaciones con Bean Validation.
@@ -305,6 +308,8 @@ POST /admin/grupos
 
 ```http
 GET /admin/usuarios
+PUT /admin/usuarios/{id}/grupo
+PUT /admin/usuarios/{id}/activo
 ```
 
 Requiere rol `SUPER_ADMIN`.
@@ -340,6 +345,8 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `GrupoRequest`
 - `GrupoResponse`
 - `AdminUsuarioResponse`
+- `AsignarGrupoRequest`
+- `UsuarioActivoRequest`
 
 ---
 
@@ -433,6 +440,23 @@ Requiere token JWT.
 }
 ```
 
+Respuesta:
+
+```json
+{
+  "id": 1,
+  "codigoTicket": "P-20260416-0001",
+  "titulo": "Solicitar nuevo acceso",
+  "descripcion": "Necesito acceso al panel de reporting",
+  "servicio": "Accesos",
+  "categoria": "Alta de permisos",
+  "estado": "ABIERTA",
+  "grupo": "Desarrollo",
+  "usuario": "admin2",
+  "fechaCreacion": "2026-04-16T20:15:00"
+}
+```
+
 ### Listar grupos
 
 ```http
@@ -492,20 +516,63 @@ Respuesta:
 ]
 ```
 
+### Asignar grupo a usuario
+
+```http
+PUT /admin/usuarios/5/grupo
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "grupoId": 2
+}
+```
+
 Respuesta:
 
 ```json
 {
-  "id": 1,
-  "codigoTicket": "P-20260416-0001",
-  "titulo": "Solicitar nuevo acceso",
-  "descripcion": "Necesito acceso al panel de reporting",
-  "servicio": "Accesos",
-  "categoria": "Alta de permisos",
-  "estado": "ABIERTA",
-  "grupo": "Desarrollo",
-  "usuario": "admin2",
-  "fechaCreacion": "2026-04-16T20:15:00"
+  "id": 5,
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "usuario1@astropi.com",
+  "dni": "12345678A",
+  "activo": true,
+  "rol": "USER",
+  "grupo": "Soporte"
+}
+```
+
+### Activar o desactivar usuario
+
+```http
+PUT /admin/usuarios/5/activo
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "activo": false
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 5,
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "usuario1@astropi.com",
+  "dni": "12345678A",
+  "activo": false,
+  "rol": "USER",
+  "grupo": "Soporte"
 }
 ```
 
@@ -657,7 +724,8 @@ Actualmente hay pruebas para:
 | Backend incidencias | Implementado |
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
-| Backend usuarios | En progreso: listado admin implementado |
+| Backend usuarios | En progreso |
+| Backend admin usuarios | En progreso: listado, asignacion de grupo y activacion implementados |
 | Backend grupos | En progreso: listado y creacion implementados |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -669,7 +737,7 @@ Actualmente hay pruebas para:
 
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
-- Completar gestion de usuarios: asignar grupo, activar/desactivar y cambiar rol.
+- Completar gestion de usuarios: cambiar rol, editar datos y eliminar si procede.
 - Completar gestion de grupos: editar, eliminar y asignar usuarios.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
