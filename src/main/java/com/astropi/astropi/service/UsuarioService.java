@@ -79,6 +79,31 @@ public class UsuarioService {
                 .toList();
     }
 
+    public AdminUsuarioResponse actualizarUsuario(Long usuarioId,
+                                                  String username,
+                                                  String nombre,
+                                                  String apellidos,
+                                                  String email,
+                                                  String dni) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        validarUsernameDisponible(username, usuarioId);
+        validarEmailDisponible(email, usuarioId);
+        validarDniDisponible(dni, usuarioId);
+
+        usuario.setUsername(username);
+        usuario.setNombre(nombre);
+        usuario.setApellidos(apellidos);
+        usuario.setEmail(normalizarTextoOpcional(email));
+        usuario.setDni(dni);
+
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+
+        return mapToAdminResponse(usuarioActualizado);
+    }
+
     public AdminUsuarioResponse asignarGrupo(Long usuarioId, Long grupoId) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -151,6 +176,46 @@ public class UsuarioService {
 
     private boolean esRolPermitido(Rol rol) {
         return rol != null && ROLES_PERMITIDOS.contains(rol.getNombre());
+    }
+
+    private void validarUsernameDisponible(String username, Long usuarioId) {
+        usuarioRepository.findByUsername(username)
+                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .ifPresent(usuarioExistente -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "El username ya existe");
+                });
+    }
+
+    private void validarEmailDisponible(String email, Long usuarioId) {
+
+        String emailNormalizado = normalizarTextoOpcional(email);
+
+        if (emailNormalizado == null) {
+            return;
+        }
+
+        usuarioRepository.findByEmail(emailNormalizado)
+                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .ifPresent(usuarioExistente -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya existe");
+                });
+    }
+
+    private void validarDniDisponible(String dni, Long usuarioId) {
+        usuarioRepository.findByDni(dni)
+                .filter(usuarioExistente -> !usuarioExistente.getId().equals(usuarioId))
+                .ifPresent(usuarioExistente -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "El dni ya existe");
+                });
+    }
+
+    private String normalizarTextoOpcional(String valor) {
+
+        if (valor == null || valor.isBlank()) {
+            return null;
+        }
+
+        return valor;
     }
 
     private void validarCambioRolSeguro(Usuario usuario, Rol nuevoRol, String usernameAdmin) {

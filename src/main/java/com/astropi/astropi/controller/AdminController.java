@@ -1,5 +1,6 @@
 package com.astropi.astropi.controller;
 
+import com.astropi.astropi.controller.dto.admin.ActualizarUsuarioRequest;
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
 import com.astropi.astropi.controller.dto.admin.AsignarRolRequest;
@@ -60,6 +61,23 @@ public class AdminController {
     @GetMapping("/roles")
     public ResponseEntity<List<RolResponse>> obtenerRoles() {
         return ResponseEntity.ok(usuarioService.obtenerRolesAdmin());
+    }
+
+    @PutMapping("/usuarios/{id}")
+    public ResponseEntity<AdminUsuarioResponse> actualizarUsuario(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarUsuarioRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.actualizarUsuario(
+                id,
+                request.getUsername(),
+                request.getNombre(),
+                request.getApellidos(),
+                request.getEmail(),
+                request.getDni()
+        );
+
+        return ResponseEntity.ok(usuario);
     }
 
     @PutMapping("/usuarios/{id}/grupo")

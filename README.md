@@ -311,6 +311,7 @@ Los endpoints `/admin/grupos` requieren rol `SUPER_ADMIN`.
 ```http
 GET /admin/usuarios
 GET /admin/roles
+PUT /admin/usuarios/{id}
 PUT /admin/usuarios/{id}/grupo
 PUT /admin/usuarios/{id}/rol
 PUT /admin/usuarios/{id}/activo
@@ -348,6 +349,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `EstadoPeticionRequest`
 - `GrupoRequest`
 - `GrupoResponse`
+- `ActualizarUsuarioRequest`
 - `AdminUsuarioResponse`
 - `AsignarGrupoRequest`
 - `AsignarRolRequest`
@@ -559,6 +561,47 @@ Respuesta:
     "grupo": "Desarrollo"
   }
 ]
+```
+
+### Editar usuario como administrador
+
+```http
+PUT /admin/usuarios/5
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "dani@astropi.com",
+  "dni": "12345678A"
+}
+```
+
+Reglas:
+
+- `username`, `nombre`, `apellidos` y `dni` son obligatorios.
+- `email` es opcional, pero si se envia debe tener formato valido.
+- No se permite repetir `username`, `email` ni `dni` en otro usuario.
+- Este endpoint no cambia password, rol, grupo ni estado activo.
+
+Respuesta:
+
+```json
+{
+  "id": 5,
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "dani@astropi.com",
+  "dni": "12345678A",
+  "activo": true,
+  "rol": "USER",
+  "grupo": "Desarrollo"
+}
 ```
 
 ### Listar roles como administrador
@@ -833,7 +876,7 @@ Actualmente hay pruebas para:
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
 | Backend usuarios | En progreso |
-| Backend admin usuarios | En progreso: listado, asignacion de grupo, asignacion de rol, activacion y autoproteccion implementados |
+| Backend admin usuarios | En progreso: listado, edicion, asignacion de grupo, asignacion de rol, activacion y autoproteccion implementados |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -845,7 +888,7 @@ Actualmente hay pruebas para:
 
 - Crear filtros avanzados de incidencias por estado, fecha, servicio o categoria.
 - Crear filtros avanzados de peticiones por estado, fecha, servicio o categoria.
-- Completar gestion de usuarios: editar datos y eliminar si procede.
+- Completar gestion de usuarios: eliminar si procede y revisar cambio de password.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
