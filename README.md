@@ -227,6 +227,16 @@ I-YYYYMMDD-0001
 P-YYYYMMDD-0001
 ```
 
+La fecha corresponde al dia de creacion, pero la numeracion no se reinicia cada dia. Cada tipo de ticket mantiene su propia secuencia continua:
+
+```text
+I-20260401-0003
+I-20260402-0004
+
+P-20260401-0003
+P-20260402-0004
+```
+
 ---
 
 ## Control de acceso

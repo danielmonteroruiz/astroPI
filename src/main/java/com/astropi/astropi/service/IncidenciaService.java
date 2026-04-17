@@ -63,23 +63,34 @@ public class IncidenciaService {
     }
     private String generarCodigoTicket(){
 
-        LocalDateTime ahora = LocalDateTime.now();
-
-        // Fecha en formato YYYYMMDD
-        String fecha = ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
-        // Inicio y fin del día
-        LocalDateTime inicioDia = ahora.toLocalDate().atStartOfDay();
-        LocalDateTime finDia = ahora.toLocalDate().atTime(23, 59, 59);
-
-        // Contador del día
-        long contador = incidenciaRepository
-                .countByFechaCreacionBetween(inicioDia, finDia) + 1;
-
-        // Formato 0001, 0002...
-        String secuencia = String.format("%04d", contador);
+        String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int siguienteNumero = obtenerSiguienteNumeroTicket();
+        String secuencia = String.format("%04d", siguienteNumero);
 
         return "I-" + fecha + "-" + secuencia;
+    }
+
+    private int obtenerSiguienteNumeroTicket() {
+        return incidenciaRepository.findTopByOrderByIdDesc()
+                .map(Incidencia::getCodigoTicket)
+                .map(this::extraerNumeroTicket)
+                .orElse(0) + 1;
+    }
+
+    private int extraerNumeroTicket(String codigoTicket) {
+
+        if (codigoTicket == null || !codigoTicket.contains("-")) {
+            return 0;
+        }
+
+        String[] partes = codigoTicket.split("-");
+        String numero = partes[partes.length - 1];
+
+        try {
+            return Integer.parseInt(numero);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
 

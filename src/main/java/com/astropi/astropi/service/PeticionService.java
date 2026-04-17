@@ -59,16 +59,34 @@ public class PeticionService {
 
     private String generarCodigoTicket() {
 
-        LocalDateTime ahora = LocalDateTime.now();
-        String fecha = ahora.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-
-        LocalDateTime inicioDia = ahora.toLocalDate().atStartOfDay();
-        LocalDateTime finDia = ahora.toLocalDate().atTime(23, 59, 59);
-
-        long contador = peticionRepository.countByFechaCreacionBetween(inicioDia, finDia) + 1;
-        String secuencia = String.format("%04d", contador);
+        String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int siguienteNumero = obtenerSiguienteNumeroTicket();
+        String secuencia = String.format("%04d", siguienteNumero);
 
         return "P-" + fecha + "-" + secuencia;
+    }
+
+    private int obtenerSiguienteNumeroTicket() {
+        return peticionRepository.findTopByOrderByIdDesc()
+                .map(Peticion::getCodigoTicket)
+                .map(this::extraerNumeroTicket)
+                .orElse(0) + 1;
+    }
+
+    private int extraerNumeroTicket(String codigoTicket) {
+
+        if (codigoTicket == null || !codigoTicket.contains("-")) {
+            return 0;
+        }
+
+        String[] partes = codigoTicket.split("-");
+        String numero = partes[partes.length - 1];
+
+        try {
+            return Integer.parseInt(numero);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     public List<PeticionResponse> obtenerMisPeticiones(String username) {

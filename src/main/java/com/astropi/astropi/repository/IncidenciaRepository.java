@@ -4,9 +4,9 @@ import com.astropi.astropi.model.Incidencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
-import java.time.LocalDateTime;
 
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -19,7 +19,7 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long>, J
 
     List<Incidencia> findByUsuarioUsernameOrGrupoId(String username, Long grupoId);
 
-    long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
+    Optional<Incidencia> findTopByOrderByIdDesc();
 
     boolean existsByGrupoId(Long grupoId);
 

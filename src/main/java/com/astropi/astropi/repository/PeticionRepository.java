@@ -5,8 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio para gestionar peticiones.
@@ -18,7 +18,7 @@ public interface PeticionRepository extends JpaRepository<Peticion, Long>, JpaSp
 
     List<Peticion> findByUsuarioUsernameOrGrupoId(String username, Long grupoId);
 
-    long countByFechaCreacionBetween(LocalDateTime inicio, LocalDateTime fin);
+    Optional<Peticion> findTopByOrderByIdDesc();
 
     boolean existsByGrupoId(Long grupoId);
 }
