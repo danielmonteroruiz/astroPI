@@ -7,15 +7,21 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Maneja errores comunes de la API para devolver respuestas claras en Postman.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Pattern CAMPO_NO_RECONOCIDO_PATTERN =
+            Pattern.compile("Unrecognized (?:field|property) \"([^\"]+)\"");
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
@@ -38,9 +44,73 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("error", "JSON invalido");
-        response.put("mensaje", "Revisa el formato del body y los valores enviados");
+
+        String campoNoPermitido = obtenerCampoNoPermitido(ex);
+
+        if (campoNoPermitido != null) {
+            response.put("mensaje", "Campo no permitido: " + campoNoPermitido);
+        } else {
+            response.put("mensaje", "Revisa el formato del body y los valores enviados");
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    private String obtenerCampoNoPermitido(HttpMessageNotReadableException exception) {
+
+        UnrecognizedPropertyException unrecognizedPropertyException = buscarCampoNoReconocido(exception);
+
+        if (unrecognizedPropertyException != null) {
+            return unrecognizedPropertyException.getPropertyName();
+        }
+
+        String campoDesdeMensaje = extraerCampoNoReconocido(exception.getMessage());
+
+        if (campoDesdeMensaje != null) {
+            return campoDesdeMensaje;
+        }
+
+        Throwable causaEspecifica = exception.getMostSpecificCause();
+
+        if (causaEspecifica != null) {
+            String campoDesdeCausaEspecifica = extraerCampoNoReconocido(causaEspecifica.getMessage());
+
+            if (campoDesdeCausaEspecifica != null) {
+                return campoDesdeCausaEspecifica;
+            }
+        }
+
+        return extraerCampoNoReconocido(exception.getMessage());
+    }
+
+    private UnrecognizedPropertyException buscarCampoNoReconocido(Throwable exception) {
+
+        Throwable causa = exception;
+
+        while (causa != null) {
+            if (causa instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
+                return unrecognizedPropertyException;
+            }
+
+            causa = causa.getCause();
+        }
+
+        return null;
+    }
+
+    private String extraerCampoNoReconocido(String mensaje) {
+
+        if (mensaje == null) {
+            return null;
+        }
+
+        Matcher matcher = CAMPO_NO_RECONOCIDO_PATTERN.matcher(mensaje);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        return null;
     }
 
     @ExceptionHandler(ResponseStatusException.class)
