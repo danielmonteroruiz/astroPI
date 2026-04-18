@@ -1,6 +1,7 @@
 package com.astropi.astropi.controller;
 
 
+import com.astropi.astropi.controller.dto.common.PagedResponse;
 import com.astropi.astropi.controller.dto.incidencia.EstadoIncidenciaRequest;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaRequest;
 import com.astropi.astropi.model.EstadoIncidencia;
@@ -58,18 +59,20 @@ public class IncidenciaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<IncidenciaResponse>> obtenerIncidencias(
+    public ResponseEntity<PagedResponse<IncidenciaResponse>> obtenerIncidencias(
             @RequestParam(required = false) EstadoIncidencia estado,
             @RequestParam(required = false) String servicio,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long grupoId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Authentication authentication){
 
         String username = authentication.getName();
 
-        List<IncidenciaResponse> incidencias =
+        PagedResponse<IncidenciaResponse> incidencias =
                 incidenciaService.obtenerIncidenciasUsuarioYGrupo(
                         username,
                         estado,
@@ -77,7 +80,9 @@ public class IncidenciaController {
                         categoria,
                         grupoId,
                         fechaDesde,
-                        fechaHasta
+                        fechaHasta,
+                        page,
+                        size
                 );
 
         return ResponseEntity.ok(incidencias);

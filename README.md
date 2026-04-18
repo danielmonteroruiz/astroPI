@@ -262,11 +262,13 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Generacion automatica de codigo de ticket.
 - Listado de incidencias por usuario.
 - Listado de incidencias por usuario y grupo.
+- Filtros y paginacion en listados de incidencias.
 - Cambio de estado de incidencias.
 - Creacion de peticiones.
 - Generacion automatica de codigo de peticion.
 - Listado de peticiones por usuario.
 - Listado de peticiones por usuario y grupo.
+- Filtros y paginacion en listados de peticiones.
 - Cambio de estado de peticiones.
 - Consulta de grupos.
 - Creacion de grupos desde admin.
@@ -304,6 +306,7 @@ GET /incidencias?categoria=Bug
 GET /incidencias?grupoId=1
 GET /incidencias?fechaDesde=2026-04-01
 GET /incidencias?fechaHasta=2026-04-18
+GET /incidencias?page=0&size=10
 PUT /incidencias/{id}/estado
 ```
 
@@ -319,6 +322,7 @@ GET /peticiones?categoria=Alta%20de%20permisos
 GET /peticiones?grupoId=1
 GET /peticiones?fechaDesde=2026-04-01
 GET /peticiones?fechaHasta=2026-04-18
+GET /peticiones?page=0&size=10
 PUT /peticiones/{id}/estado
 ```
 
@@ -384,6 +388,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `AsignarRolRequest`
 - `RolResponse`
 - `UsuarioActivoRequest`
+- `PagedResponse`
 
 ---
 
@@ -470,6 +475,7 @@ GET /incidencias?fechaDesde=2026-04-01
 GET /incidencias?fechaHasta=2026-04-18
 GET /incidencias?fechaDesde=2026-04-01&fechaHasta=2026-04-18
 GET /incidencias?estado=ABIERTA&grupoId=1
+GET /incidencias?estado=ABIERTA&page=0&size=10
 ```
 
 Requiere token JWT.
@@ -482,10 +488,37 @@ Filtros disponibles:
 - `grupoId`: id del grupo.
 - `fechaDesde`: fecha minima de creacion en formato `yyyy-MM-dd`.
 - `fechaHasta`: fecha maxima de creacion en formato `yyyy-MM-dd`.
+- `page`: numero de pagina, empezando en 0.
+- `size`: cantidad de elementos por pagina, entre 1 y 100.
 
 Las incidencias devueltas siguen respetando el acceso del usuario autenticado: incidencias propias o de su grupo.
 
 Si se envian ambas fechas, `fechaDesde` no puede ser posterior a `fechaHasta`.
+
+Respuesta paginada:
+
+```json
+{
+  "content": [
+    {
+      "id": 9,
+      "codigoTicket": "I-20260418-0002",
+      "titulo": "Prueba filtro incidencia abierta",
+      "descripcion": "Incidencia creada para probar el filtro por estado ABIERTA",
+      "servicio": "Autenticacion",
+      "categoria": "Bug",
+      "estado": "ABIERTA",
+      "grupo": "Desarrollo",
+      "usuario": "superadmin",
+      "fechaCreacion": "2026-04-18T00:41:13.237061"
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
 
 ### Crear peticion
 
@@ -533,6 +566,7 @@ GET /peticiones?fechaDesde=2026-04-01
 GET /peticiones?fechaHasta=2026-04-18
 GET /peticiones?fechaDesde=2026-04-01&fechaHasta=2026-04-18
 GET /peticiones?estado=ABIERTA&grupoId=1
+GET /peticiones?estado=ABIERTA&page=0&size=10
 ```
 
 Requiere token JWT.
@@ -545,10 +579,37 @@ Filtros disponibles:
 - `grupoId`: id del grupo.
 - `fechaDesde`: fecha minima de creacion en formato `yyyy-MM-dd`.
 - `fechaHasta`: fecha maxima de creacion en formato `yyyy-MM-dd`.
+- `page`: numero de pagina, empezando en 0.
+- `size`: cantidad de elementos por pagina, entre 1 y 100.
 
 Las peticiones devueltas siguen respetando el acceso del usuario autenticado: peticiones propias o de su grupo.
 
 Si se envian ambas fechas, `fechaDesde` no puede ser posterior a `fechaHasta`.
+
+Respuesta paginada:
+
+```json
+{
+  "content": [
+    {
+      "id": 3,
+      "codigoTicket": "P-20260418-0002",
+      "titulo": "Solicitar nuevo acceso",
+      "descripcion": "Necesito acceso al panel de reporting",
+      "servicio": "Accesos",
+      "categoria": "Alta de permisos",
+      "estado": "ABIERTA",
+      "grupo": "Desarrollo",
+      "usuario": "superadmin",
+      "fechaCreacion": "2026-04-18T00:46:11.265135"
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
 
 ### Listar grupos
 
@@ -978,6 +1039,7 @@ Actualmente hay pruebas para:
 | Backend incidencias | Implementado |
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
+| Filtros y paginacion de tickets | Implementado |
 | Backend usuarios | En progreso |
 | Backend admin usuarios | En progreso: listado, edicion, asignacion de grupo, asignacion de rol, activacion y autoproteccion implementados |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
@@ -989,7 +1051,6 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Valorar paginacion en listados de incidencias y peticiones.
 - Completar gestion de usuarios: eliminar si procede y revisar cambio de password.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.

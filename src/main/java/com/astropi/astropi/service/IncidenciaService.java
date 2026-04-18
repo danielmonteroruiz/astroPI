@@ -10,6 +10,9 @@ import com.astropi.astropi.repository.UsuarioRepository;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import com.astropi.astropi.controller.dto.common.PagedResponse;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaResponse;
 
 /**
@@ -102,6 +106,7 @@ public class IncidenciaService {
                 .map(this::mapToResponse)
                 .toList();
     }
+
     public IncidenciaResponse mapToResponse(Incidencia incidencia){
 
         IncidenciaResponse response = new IncidenciaResponse();
@@ -127,18 +132,21 @@ public class IncidenciaService {
     }
 
 
-    public List<IncidenciaResponse> obtenerIncidenciasUsuarioYGrupo(String username,
-                                                                    EstadoIncidencia estado,
-                                                                    String servicio,
-                                                                    String categoria,
-                                                                    Long grupoId,
-                                                                    LocalDate fechaDesde,
-                                                                    LocalDate fechaHasta){
+    public PagedResponse<IncidenciaResponse> obtenerIncidenciasUsuarioYGrupo(String username,
+                                                                             EstadoIncidencia estado,
+                                                                             String servicio,
+                                                                             String categoria,
+                                                                             Long grupoId,
+                                                                             LocalDate fechaDesde,
+                                                                             LocalDate fechaHasta,
+                                                                             int page,
+                                                                             int size){
 
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         validarRangoFechas(fechaDesde, fechaHasta);
+        validarPaginacion(page, size);
 
         Specification<Incidencia> filtros = crearFiltrosIncidencias(
                 usuario,
@@ -150,14 +158,28 @@ public class IncidenciaService {
                 fechaHasta
         );
 
-        List<Incidencia> incidencias = incidenciaRepository.findAll(
-                filtros,
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
                 Sort.by(Sort.Direction.DESC, "fechaCreacion")
         );
 
-        return incidencias.stream()
+        Page<Incidencia> incidencias = incidenciaRepository.findAll(
+                filtros,
+                pageable
+        );
+
+        List<IncidenciaResponse> content = incidencias.getContent().stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        return new PagedResponse<>(
+                content,
+                incidencias.getNumber(),
+                incidencias.getSize(),
+                incidencias.getTotalElements(),
+                incidencias.getTotalPages()
+        );
     }
 
     private Specification<Incidencia> crearFiltrosIncidencias(Usuario usuario,
@@ -225,6 +247,17 @@ public class IncidenciaService {
 
         if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fechaDesde no puede ser posterior a fechaHasta");
+        }
+    }
+
+    private void validarPaginacion(int page, int size) {
+
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "page no puede ser negativo");
+        }
+
+        if (size < 1 || size > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "size debe estar entre 1 y 100");
         }
     }
 

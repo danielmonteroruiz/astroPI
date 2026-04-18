@@ -1,5 +1,6 @@
 package com.astropi.astropi.controller;
 
+import com.astropi.astropi.controller.dto.common.PagedResponse;
 import com.astropi.astropi.controller.dto.peticion.EstadoPeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
@@ -57,18 +58,20 @@ public class PeticionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PeticionResponse>> obtenerPeticiones(
+    public ResponseEntity<PagedResponse<PeticionResponse>> obtenerPeticiones(
             @RequestParam(required = false) EstadoPeticion estado,
             @RequestParam(required = false) String servicio,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long grupoId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
 
         String username = authentication.getName();
 
-        List<PeticionResponse> peticiones =
+        PagedResponse<PeticionResponse> peticiones =
                 peticionService.obtenerPeticionesUsuarioYGrupo(
                         username,
                         estado,
@@ -76,7 +79,9 @@ public class PeticionController {
                         categoria,
                         grupoId,
                         fechaDesde,
-                        fechaHasta
+                        fechaHasta,
+                        page,
+                        size
                 );
 
         return ResponseEntity.ok(peticiones);
