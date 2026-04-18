@@ -6,6 +6,8 @@ import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Rol;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
+import com.astropi.astropi.repository.IncidenciaRepository;
+import com.astropi.astropi.repository.PeticionRepository;
 import com.astropi.astropi.repository.RolRepository;
 import com.astropi.astropi.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +32,22 @@ public class UsuarioService {
     private RolRepository rolRepository;
     @Autowired
     private GrupoRepository grupoRepository;
+    @Autowired
+    private IncidenciaRepository incidenciaRepository;
+    @Autowired
+    private PeticionRepository peticionRepository;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           RolRepository rolRepository,
                           GrupoRepository grupoRepository,
+                          IncidenciaRepository incidenciaRepository,
+                          PeticionRepository peticionRepository,
                           PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.grupoRepository = grupoRepository;
+        this.incidenciaRepository = incidenciaRepository;
+        this.peticionRepository = peticionRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -163,6 +173,16 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    public void eliminarUsuario(Long usuarioId, String usernameAdmin) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        validarEliminacionUsuario(usuario, usernameAdmin);
+
+        usuarioRepository.delete(usuario);
+    }
+
     private AdminUsuarioResponse mapToAdminResponse(Usuario usuario) {
 
         AdminUsuarioResponse response = new AdminUsuarioResponse();
@@ -269,6 +289,25 @@ public class UsuarioService {
 
     private boolean esUltimoSuperAdminActivo() {
         return usuarioRepository.countByRolNombreAndActivoTrue("SUPER_ADMIN") <= 1;
+    }
+
+    private void validarEliminacionUsuario(Usuario usuario, String usernameAdmin) {
+
+        if (usuario.getUsername().equals(usernameAdmin)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes eliminar tu propio usuario");
+        }
+
+        if (esSuperAdmin(usuario) && Boolean.TRUE.equals(usuario.getActivo()) && esUltimoSuperAdminActivo()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe existir al menos un SUPER_ADMIN activo");
+        }
+
+        if (incidenciaRepository.existsByUsuarioId(usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede eliminar un usuario con incidencias asociadas");
+        }
+
+        if (peticionRepository.existsByUsuarioId(usuario.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede eliminar un usuario con peticiones asociadas");
+        }
     }
 
     private RolResponse mapToRolResponse(Rol rol) {

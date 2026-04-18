@@ -353,6 +353,7 @@ PUT /admin/usuarios/{id}/grupo
 PUT /admin/usuarios/{id}/rol
 PUT /admin/usuarios/{id}/activo
 PUT /admin/usuarios/{id}/password
+DELETE /admin/usuarios/{id}
 ```
 
 Requiere rol `SUPER_ADMIN`.
@@ -916,6 +917,31 @@ Respuesta:
 }
 ```
 
+### Eliminar usuario como administrador
+
+```http
+DELETE /admin/usuarios/5
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Reglas de seguridad:
+
+- Un `SUPER_ADMIN` no puede eliminar su propio usuario.
+- No se permite eliminar el ultimo `SUPER_ADMIN` activo.
+- No se permite eliminar usuarios con incidencias asociadas.
+- No se permite eliminar usuarios con peticiones asociadas.
+
+Si el usuario se puede eliminar, devuelve:
+
+```json
+{
+  "mensaje": "Usuario borrado correctamente"
+}
+```
+
+Si el usuario tiene tickets asociados, devuelve `409 Conflict` con un mensaje claro.
+
 ---
 
 ## Validaciones
@@ -1123,7 +1149,7 @@ Actualmente hay pruebas para:
 | Cambio de estado | Implementado |
 | Filtros y paginacion de tickets | Implementado |
 | Backend usuarios | En progreso |
-| Backend admin usuarios | En progreso: listado, edicion, asignacion de grupo, asignacion de rol, activacion, cambio de password y autoproteccion implementados |
+| Backend admin usuarios | Implementado: listado, edicion, asignacion de grupo, asignacion de rol, activacion, cambio de password, eliminacion segura y autoproteccion |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -1133,7 +1159,6 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Completar gestion de usuarios: eliminar si procede.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.

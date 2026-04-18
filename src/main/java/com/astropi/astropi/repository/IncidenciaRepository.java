@@ -23,4 +23,6 @@ public interface IncidenciaRepository extends JpaRepository<Incidencia, Long>, J
 
     boolean existsByGrupoId(Long grupoId);
 
+    boolean existsByUsuarioId(Long usuarioId);
+
 }

@@ -17,7 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
@@ -132,5 +134,18 @@ public class AdminController {
         );
 
         return ResponseEntity.ok(usuario);
+    }
+
+    @DeleteMapping("/usuarios/{id}")
+    public ResponseEntity<Map<String, String>> eliminarUsuario(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        usuarioService.eliminarUsuario(id, authentication.getName());
+
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("mensaje", "Usuario borrado correctamente");
+
+        return ResponseEntity.ok(response);
     }
 }

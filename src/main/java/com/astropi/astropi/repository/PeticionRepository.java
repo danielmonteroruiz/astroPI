@@ -21,4 +21,6 @@ public interface PeticionRepository extends JpaRepository<Peticion, Long>, JpaSp
     Optional<Peticion> findTopByOrderByIdDesc();
 
     boolean existsByGrupoId(Long grupoId);
+
+    boolean existsByUsuarioId(Long usuarioId);
 }
