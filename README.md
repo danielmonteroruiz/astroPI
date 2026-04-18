@@ -294,6 +294,10 @@ POST /auth/register
 GET /auth/me
 ```
 
+`POST /auth/login` y `POST /auth/register` son publicos.
+
+`GET /auth/me` requiere token JWT y sirve para comprobar el usuario autenticado.
+
 ### Incidencias
 
 ```http
