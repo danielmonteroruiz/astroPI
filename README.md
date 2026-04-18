@@ -162,7 +162,13 @@ Estado: implementado en backend.
 
 Sistema granular de permisos.
 
-Estado: pendiente.
+Campos:
+
+- `id`
+- `nombre`
+- `descripcion`
+
+Estado: implementado a nivel de entidad, administracion y asignacion por rol.
 
 ---
 
@@ -278,6 +284,8 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Activacion y desactivacion de usuarios desde admin.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
+- Creacion y listado de permisos granulares.
+- Asignacion y retirada de permisos por rol.
 - Validaciones con Bean Validation.
 - Uso de DTOs para requests y responses.
 - Manejo basico de errores de validacion.
@@ -348,6 +356,11 @@ Los endpoints `/admin/grupos` requieren rol `SUPER_ADMIN`.
 ```http
 GET /admin/usuarios
 GET /admin/roles
+GET /admin/permisos
+POST /admin/permisos
+DELETE /admin/permisos/{id}
+PUT /admin/roles/{id}/permisos
+DELETE /admin/roles/{id}/permisos/{permisoId}
 PUT /admin/usuarios/{id}
 PUT /admin/usuarios/{id}/grupo
 PUT /admin/usuarios/{id}/rol
@@ -395,6 +408,9 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `RolResponse`
 - `UsuarioActivoRequest`
 - `CambiarPasswordUsuarioRequest`
+- `PermisoRequest`
+- `PermisoResponse`
+- `AsignarPermisoRequest`
 - `PagedResponse`
 
 ---
@@ -771,13 +787,122 @@ Respuesta esperada:
 [
   {
     "id": 1,
-    "nombre": "SUPER_ADMIN"
+    "nombre": "SUPER_ADMIN",
+    "permisos": [
+      "GESTIONAR_USUARIOS"
+    ]
   },
   {
     "id": 2,
-    "nombre": "USER"
+    "nombre": "USER",
+    "permisos": []
   }
 ]
+```
+
+### Listar permisos como administrador
+
+```http
+GET /admin/permisos
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Respuesta:
+
+```json
+[
+  {
+    "id": 1,
+    "nombre": "GESTIONAR_USUARIOS",
+    "descripcion": "Permite gestionar usuarios desde administracion"
+  }
+]
+```
+
+### Crear permiso como administrador
+
+```http
+POST /admin/permisos
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "nombre": "GESTIONAR_USUARIOS",
+  "descripcion": "Permite gestionar usuarios desde administracion"
+}
+```
+
+Reglas:
+
+- `nombre` es obligatorio y no puede superar 100 caracteres.
+- `descripcion` es opcional y no puede superar 255 caracteres.
+- No se permite crear dos permisos con el mismo nombre.
+
+### Eliminar permiso como administrador
+
+```http
+DELETE /admin/permisos/1
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Reglas:
+
+- No se permite eliminar un permiso si esta asignado a algun rol.
+
+Si el permiso se puede eliminar, devuelve:
+
+```json
+{
+  "mensaje": "Permiso borrado correctamente"
+}
+```
+
+### Asignar permiso a rol
+
+```http
+PUT /admin/roles/1/permisos
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "permisoId": 1
+}
+```
+
+Respuesta:
+
+```json
+{
+  "id": 1,
+  "nombre": "SUPER_ADMIN",
+  "permisos": [
+    "GESTIONAR_USUARIOS"
+  ]
+}
+```
+
+### Quitar permiso a rol
+
+```http
+DELETE /admin/roles/1/permisos/1
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+Respuesta:
+
+```json
+{
+  "id": 1,
+  "nombre": "SUPER_ADMIN",
+  "permisos": []
+}
 ```
 
 ### Asignar grupo a usuario
@@ -1152,7 +1277,7 @@ Actualmente hay pruebas para:
 | Backend admin usuarios | Implementado: listado, edicion, asignacion de grupo, asignacion de rol, activacion, cambio de password, eliminacion segura y autoproteccion |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
-| Permisos granulares | Pendiente |
+| Permisos granulares | Implementado: entidad, listado, creacion, eliminacion y asignacion por rol |
 | Frontend React | Pendiente |
 
 ---
@@ -1160,7 +1285,7 @@ Actualmente hay pruebas para:
 ## Proximas mejoras
 
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
-- Crear sistema de permisos granular.
+- Aplicar permisos granulares a reglas concretas de negocio si el panel admin lo requiere.
 - Crear panel de administracion para `SUPER_ADMIN`.
 - Preparar coleccion de Postman.
 - Valorar Flyway o Liquibase para migraciones de base de datos.

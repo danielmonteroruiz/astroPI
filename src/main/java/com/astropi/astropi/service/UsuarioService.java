@@ -3,6 +3,7 @@ package com.astropi.astropi.service;
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.model.Grupo;
+import com.astropi.astropi.model.Permiso;
 import com.astropi.astropi.model.Rol;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
@@ -316,6 +317,10 @@ public class UsuarioService {
 
         response.setId(rol.getId());
         response.setNombre(rol.getNombre());
+        response.setPermisos(rol.getPermisos().stream()
+                .map(Permiso::getNombre)
+                .sorted()
+                .toList());
 
         return response;
     }

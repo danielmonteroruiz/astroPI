@@ -1,12 +1,10 @@
 package com.astropi.astropi.controller.dto.admin;
 
-import java.util.List;
-
-public class RolResponse {
+public class PermisoResponse {
 
     private Long id;
     private String nombre;
-    private List<String> permisos;
+    private String descripcion;
 
     public Long getId() {
         return id;
@@ -24,11 +22,11 @@ public class RolResponse {
         this.nombre = nombre;
     }
 
-    public List<String> getPermisos() {
-        return permisos;
+    public String getDescripcion() {
+        return descripcion;
     }
 
-    public void setPermisos(List<String> permisos) {
-        this.permisos = permisos;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

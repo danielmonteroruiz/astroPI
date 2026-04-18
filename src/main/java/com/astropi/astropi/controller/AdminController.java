@@ -3,13 +3,17 @@ package com.astropi.astropi.controller;
 import com.astropi.astropi.controller.dto.admin.ActualizarUsuarioRequest;
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
+import com.astropi.astropi.controller.dto.admin.AsignarPermisoRequest;
 import com.astropi.astropi.controller.dto.admin.AsignarRolRequest;
 import com.astropi.astropi.controller.dto.admin.CambiarPasswordUsuarioRequest;
+import com.astropi.astropi.controller.dto.admin.PermisoRequest;
+import com.astropi.astropi.controller.dto.admin.PermisoResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.service.GrupoService;
+import com.astropi.astropi.service.PermisoService;
 import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +34,9 @@ public class AdminController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private PermisoService permisoService;
 
     @PostMapping("/grupos")
     public ResponseEntity<GrupoResponse> crearGrupo(@Valid @RequestBody GrupoRequest request) {
@@ -64,6 +71,52 @@ public class AdminController {
     @GetMapping("/roles")
     public ResponseEntity<List<RolResponse>> obtenerRoles() {
         return ResponseEntity.ok(usuarioService.obtenerRolesAdmin());
+    }
+
+    @GetMapping("/permisos")
+    public ResponseEntity<List<PermisoResponse>> obtenerPermisos() {
+        return ResponseEntity.ok(permisoService.obtenerPermisos());
+    }
+
+    @PostMapping("/permisos")
+    public ResponseEntity<PermisoResponse> crearPermiso(@Valid @RequestBody PermisoRequest request) {
+        PermisoResponse permiso = permisoService.crearPermiso(
+                request.getNombre(),
+                request.getDescripcion()
+        );
+
+        return ResponseEntity.ok(permiso);
+    }
+
+    @DeleteMapping("/permisos/{id}")
+    public ResponseEntity<Map<String, String>> eliminarPermiso(@PathVariable Long id) {
+
+        permisoService.eliminarPermiso(id);
+
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("mensaje", "Permiso borrado correctamente");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/roles/{id}/permisos")
+    public ResponseEntity<RolResponse> asignarPermisoARol(
+            @PathVariable Long id,
+            @Valid @RequestBody AsignarPermisoRequest request) {
+
+        RolResponse rol = permisoService.asignarPermisoARol(id, request.getPermisoId());
+
+        return ResponseEntity.ok(rol);
+    }
+
+    @DeleteMapping("/roles/{id}/permisos/{permisoId}")
+    public ResponseEntity<RolResponse> quitarPermisoARol(
+            @PathVariable Long id,
+            @PathVariable Long permisoId) {
+
+        RolResponse rol = permisoService.quitarPermisoARol(id, permisoId);
+
+        return ResponseEntity.ok(rol);
     }
 
     @PutMapping("/usuarios/{id}")

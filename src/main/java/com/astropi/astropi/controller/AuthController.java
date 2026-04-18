@@ -53,7 +53,7 @@ public class AuthController {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        String role = obtenerRolPrincipal(userDetails);
 
         String token = jwtUtil.generateToken(userDetails.getUsername(),role);
 
@@ -87,12 +87,21 @@ public class AuthController {
         String username = authentication.getName();
 
         // Rol obtenido desde el token JWT.
-        String role = authentication.getAuthorities()
-                .iterator()
-                .next()
-                .getAuthority();
+        String role = authentication.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("ROLE_USER");
         return new UserResponse(username, role);
     }
 
+    private String obtenerRolPrincipal(UserDetails userDetails) {
+
+        return userDetails.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("ROLE_USER");
+    }
 
 }
