@@ -940,6 +940,45 @@ Ejemplo de error de validacion:
 }
 ```
 
+### Parametros de URL
+
+Si un parametro de URL no tiene el formato correcto, la API devuelve un error claro.
+
+Ejemplos:
+
+```http
+GET /incidencias?estado=INVALIDO
+GET /incidencias?fechaDesde=18-04-2026
+GET /incidencias?page=abc
+```
+
+Respuesta para un estado no valido:
+
+```json
+{
+  "error": "Parametro invalido",
+  "mensaje": "Valor no permitido para estado. Valores permitidos: ABIERTA, EN_PROCESO, PARADA, RESUELTA, CERRADA"
+}
+```
+
+Respuesta para una fecha no valida:
+
+```json
+{
+  "error": "Parametro invalido",
+  "mensaje": "Formato no valido para fechaDesde. Usa yyyy-MM-dd"
+}
+```
+
+Respuesta para una pagina no numerica:
+
+```json
+{
+  "error": "Parametro invalido",
+  "mensaje": "El parametro page debe ser numerico"
+}
+```
+
 ---
 
 ## PostgreSQL y DBeaver

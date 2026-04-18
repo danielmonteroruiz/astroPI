@@ -8,13 +8,17 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.exc.UnrecognizedPropertyException;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Maneja errores comunes de la API para devolver respuestas claras en Postman.
@@ -123,6 +127,49 @@ public class GlobalExceptionHandler {
         response.put("mensaje", ex.getReason());
 
         return ResponseEntity.status(ex.getStatusCode()).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleRequestParamTypeMismatch(MethodArgumentTypeMismatchException ex) {
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("error", "Parametro invalido");
+        response.put("mensaje", crearMensajeParametroInvalido(ex));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    private String crearMensajeParametroInvalido(MethodArgumentTypeMismatchException ex) {
+
+        String nombreParametro = ex.getName();
+        Class<?> tipoEsperado = ex.getRequiredType();
+
+        if (tipoEsperado == null) {
+            return "El parametro " + nombreParametro + " no tiene un formato valido";
+        }
+
+        if (tipoEsperado.isEnum()) {
+            return "Valor no permitido para " + nombreParametro + ". Valores permitidos: "
+                    + obtenerValoresEnum(tipoEsperado);
+        }
+
+        if (tipoEsperado.equals(LocalDate.class)) {
+            return "Formato no valido para " + nombreParametro + ". Usa yyyy-MM-dd";
+        }
+
+        if (tipoEsperado.equals(Integer.class) || tipoEsperado.equals(int.class)
+                || tipoEsperado.equals(Long.class) || tipoEsperado.equals(long.class)) {
+            return "El parametro " + nombreParametro + " debe ser numerico";
+        }
+
+        return "El parametro " + nombreParametro + " no tiene un formato valido";
+    }
+
+    private String obtenerValoresEnum(Class<?> enumClass) {
+
+        return Arrays.stream(enumClass.getEnumConstants())
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
