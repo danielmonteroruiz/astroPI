@@ -8,10 +8,12 @@ import com.astropi.astropi.model.Peticion;
 import com.astropi.astropi.service.PeticionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -60,6 +62,8 @@ public class PeticionController {
             @RequestParam(required = false) String servicio,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long grupoId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
             Authentication authentication) {
 
         String username = authentication.getName();
@@ -70,7 +74,9 @@ public class PeticionController {
                         estado,
                         servicio,
                         categoria,
-                        grupoId
+                        grupoId,
+                        fechaDesde,
+                        fechaHasta
                 );
 
         return ResponseEntity.ok(peticiones);

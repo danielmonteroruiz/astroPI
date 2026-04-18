@@ -302,6 +302,8 @@ GET /incidencias?estado=ABIERTA
 GET /incidencias?servicio=Autenticacion
 GET /incidencias?categoria=Bug
 GET /incidencias?grupoId=1
+GET /incidencias?fechaDesde=2026-04-01
+GET /incidencias?fechaHasta=2026-04-18
 PUT /incidencias/{id}/estado
 ```
 
@@ -315,6 +317,8 @@ GET /peticiones?estado=ABIERTA
 GET /peticiones?servicio=Accesos
 GET /peticiones?categoria=Alta%20de%20permisos
 GET /peticiones?grupoId=1
+GET /peticiones?fechaDesde=2026-04-01
+GET /peticiones?fechaHasta=2026-04-18
 PUT /peticiones/{id}/estado
 ```
 
@@ -462,6 +466,9 @@ GET /incidencias?estado=ABIERTA
 GET /incidencias?servicio=Autenticacion
 GET /incidencias?categoria=Bug
 GET /incidencias?grupoId=1
+GET /incidencias?fechaDesde=2026-04-01
+GET /incidencias?fechaHasta=2026-04-18
+GET /incidencias?fechaDesde=2026-04-01&fechaHasta=2026-04-18
 GET /incidencias?estado=ABIERTA&grupoId=1
 ```
 
@@ -473,8 +480,12 @@ Filtros disponibles:
 - `servicio`: coincidencia exacta sin distinguir mayusculas/minusculas.
 - `categoria`: coincidencia exacta sin distinguir mayusculas/minusculas.
 - `grupoId`: id del grupo.
+- `fechaDesde`: fecha minima de creacion en formato `yyyy-MM-dd`.
+- `fechaHasta`: fecha maxima de creacion en formato `yyyy-MM-dd`.
 
 Las incidencias devueltas siguen respetando el acceso del usuario autenticado: incidencias propias o de su grupo.
+
+Si se envian ambas fechas, `fechaDesde` no puede ser posterior a `fechaHasta`.
 
 ### Crear peticion
 
@@ -518,6 +529,9 @@ GET /peticiones?estado=ABIERTA
 GET /peticiones?servicio=Accesos
 GET /peticiones?categoria=Alta%20de%20permisos
 GET /peticiones?grupoId=1
+GET /peticiones?fechaDesde=2026-04-01
+GET /peticiones?fechaHasta=2026-04-18
+GET /peticiones?fechaDesde=2026-04-01&fechaHasta=2026-04-18
 GET /peticiones?estado=ABIERTA&grupoId=1
 ```
 
@@ -529,8 +543,12 @@ Filtros disponibles:
 - `servicio`: coincidencia exacta sin distinguir mayusculas/minusculas.
 - `categoria`: coincidencia exacta sin distinguir mayusculas/minusculas.
 - `grupoId`: id del grupo.
+- `fechaDesde`: fecha minima de creacion en formato `yyyy-MM-dd`.
+- `fechaHasta`: fecha maxima de creacion en formato `yyyy-MM-dd`.
 
 Las peticiones devueltas siguen respetando el acceso del usuario autenticado: peticiones propias o de su grupo.
+
+Si se envian ambas fechas, `fechaDesde` no puede ser posterior a `fechaHasta`.
 
 ### Listar grupos
 
@@ -971,8 +989,7 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Completar filtros avanzados de incidencias por fecha.
-- Completar filtros avanzados de peticiones por fecha.
+- Valorar paginacion en listados de incidencias y peticiones.
 - Completar gestion de usuarios: eliminar si procede y revisar cambio de password.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -130,17 +131,23 @@ public class IncidenciaService {
                                                                     EstadoIncidencia estado,
                                                                     String servicio,
                                                                     String categoria,
-                                                                    Long grupoId){
+                                                                    Long grupoId,
+                                                                    LocalDate fechaDesde,
+                                                                    LocalDate fechaHasta){
 
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        validarRangoFechas(fechaDesde, fechaHasta);
 
         Specification<Incidencia> filtros = crearFiltrosIncidencias(
                 usuario,
                 estado,
                 servicio,
                 categoria,
-                grupoId
+                grupoId,
+                fechaDesde,
+                fechaHasta
         );
 
         List<Incidencia> incidencias = incidenciaRepository.findAll(
@@ -157,7 +164,9 @@ public class IncidenciaService {
                                                               EstadoIncidencia estado,
                                                               String servicio,
                                                               String categoria,
-                                                              Long grupoId) {
+                                                              Long grupoId,
+                                                              LocalDate fechaDesde,
+                                                              LocalDate fechaHasta) {
 
         return (root, query, criteriaBuilder) -> {
 
@@ -194,8 +203,29 @@ public class IncidenciaService {
                 predicates.add(criteriaBuilder.equal(root.get("grupo").get("id"), grupoId));
             }
 
+            if (fechaDesde != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("fechaCreacion"),
+                        fechaDesde.atStartOfDay()
+                ));
+            }
+
+            if (fechaHasta != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("fechaCreacion"),
+                        fechaHasta.atTime(23, 59, 59)
+                ));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private void validarRangoFechas(LocalDate fechaDesde, LocalDate fechaHasta) {
+
+        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fechaDesde no puede ser posterior a fechaHasta");
+        }
     }
 
     private boolean tieneTexto(String valor) {
