@@ -152,6 +152,17 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    public AdminUsuarioResponse cambiarPassword(Long usuarioId, String password) {
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        usuario.setPassword(passwordEncoder.encode(password));
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+
+        return mapToAdminResponse(usuarioActualizado);
+    }
+
     private AdminUsuarioResponse mapToAdminResponse(Usuario usuario) {
 
         AdminUsuarioResponse response = new AdminUsuarioResponse();

@@ -4,6 +4,7 @@ import com.astropi.astropi.controller.dto.admin.ActualizarUsuarioRequest;
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
 import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
 import com.astropi.astropi.controller.dto.admin.AsignarRolRequest;
+import com.astropi.astropi.controller.dto.admin.CambiarPasswordUsuarioRequest;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
@@ -115,6 +116,19 @@ public class AdminController {
                 id,
                 request.getActivo(),
                 authentication.getName()
+        );
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @PutMapping("/usuarios/{id}/password")
+    public ResponseEntity<AdminUsuarioResponse> cambiarPassword(
+            @PathVariable Long id,
+            @Valid @RequestBody CambiarPasswordUsuarioRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.cambiarPassword(
+                id,
+                request.getPassword()
         );
 
         return ResponseEntity.ok(usuario);

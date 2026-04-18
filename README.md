@@ -348,6 +348,7 @@ PUT /admin/usuarios/{id}
 PUT /admin/usuarios/{id}/grupo
 PUT /admin/usuarios/{id}/rol
 PUT /admin/usuarios/{id}/activo
+PUT /admin/usuarios/{id}/password
 ```
 
 Requiere rol `SUPER_ADMIN`.
@@ -388,6 +389,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `AsignarRolRequest`
 - `RolResponse`
 - `UsuarioActivoRequest`
+- `CambiarPasswordUsuarioRequest`
 - `PagedResponse`
 
 ---
@@ -873,6 +875,43 @@ Respuesta:
 }
 ```
 
+### Cambiar password de usuario como administrador
+
+```http
+PUT /admin/usuarios/5/password
+```
+
+Requiere token JWT de usuario con rol `SUPER_ADMIN`.
+
+```json
+{
+  "password": "nuevaPassword123"
+}
+```
+
+Reglas:
+
+- `password` es obligatoria.
+- Debe tener entre 6 y 100 caracteres.
+- La password se guarda encriptada con BCrypt.
+- La respuesta nunca devuelve la password.
+
+Respuesta:
+
+```json
+{
+  "id": 5,
+  "username": "usuario1",
+  "nombre": "Dani",
+  "apellidos": "Montero",
+  "email": "usuario1@astropi.com",
+  "dni": "12345678A",
+  "activo": true,
+  "rol": "USER",
+  "grupo": "Soporte"
+}
+```
+
 ---
 
 ## Validaciones
@@ -1080,7 +1119,7 @@ Actualmente hay pruebas para:
 | Cambio de estado | Implementado |
 | Filtros y paginacion de tickets | Implementado |
 | Backend usuarios | En progreso |
-| Backend admin usuarios | En progreso: listado, edicion, asignacion de grupo, asignacion de rol, activacion y autoproteccion implementados |
+| Backend admin usuarios | En progreso: listado, edicion, asignacion de grupo, asignacion de rol, activacion, cambio de password y autoproteccion implementados |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
 | Permisos granulares | Pendiente |
@@ -1090,7 +1129,7 @@ Actualmente hay pruebas para:
 
 ## Proximas mejoras
 
-- Completar gestion de usuarios: eliminar si procede y revisar cambio de password.
+- Completar gestion de usuarios: eliminar si procede.
 - Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
 - Crear sistema de permisos granular.
 - Crear panel de administracion para `SUPER_ADMIN`.
