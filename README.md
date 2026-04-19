@@ -1294,6 +1294,8 @@ Actualmente hay pruebas para:
 - Deserializacion del estado `CERRADA` en `EstadoPeticionRequest`.
 - Regla de negocio que impide reabrir incidencias cerradas.
 - Regla de negocio que impide reabrir peticiones cerradas.
+- Regla de seguridad que impide a un administrador desactivar su propio usuario.
+- Regla de seguridad que impide a un `SUPER_ADMIN` quitarse su propio rol.
 
 ---
 

@@ -36,6 +36,7 @@ class PeticionServiceTest {
     @Test
     void noDeberiaReabrirPeticionCerrada() {
 
+        // Comprueba que una peticion cerrada queda bloqueada y no puede volver a ABIERTA.
         Usuario usuario = crearUsuario("usuario1");
         Peticion peticion = new Peticion("Titulo", "Descripcion", usuario);
         peticion.setEstado(EstadoPeticion.CERRADA);

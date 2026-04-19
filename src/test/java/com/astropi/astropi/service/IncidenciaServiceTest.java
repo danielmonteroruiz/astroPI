@@ -36,6 +36,7 @@ class IncidenciaServiceTest {
     @Test
     void noDeberiaReabrirIncidenciaCerrada() {
 
+        // Comprueba que una incidencia cerrada queda bloqueada y no puede volver a ABIERTA.
         Usuario usuario = crearUsuario("usuario1");
         Incidencia incidencia = new Incidencia("Titulo", "Descripcion", usuario);
         incidencia.setEstado(EstadoIncidencia.CERRADA);
