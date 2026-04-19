@@ -1196,6 +1196,7 @@ Configuracion actual:
 spring.datasource.url=jdbc:postgresql://localhost:5432/astroPI_DB
 spring.datasource.username=postgres
 spring.jpa.hibernate.ddl-auto=update
+spring.jpa.open-in-view=false
 ```
 
 Nota importante:
