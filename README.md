@@ -65,6 +65,8 @@ Base de datos PostgreSQL
 - Postman para pruebas
 - DBeaver para gestion de base de datos
 
+El backend funciona como API REST y no usa motor de plantillas HTML.
+
 ---
 
 ## Seguridad
