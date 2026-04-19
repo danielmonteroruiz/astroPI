@@ -1254,6 +1254,14 @@ app.jwt.expiration-ms=86400000
 
 En un entorno real, `app.jwt.secret` deberia moverse a una variable de entorno o a un sistema seguro de secretos.
 
+Configuracion CORS actual para el futuro frontend:
+
+```properties
+app.cors.allowed-origins=http://localhost:5173,http://localhost:3000
+```
+
+Esto permite llamadas desde React con Vite (`5173`) o Create React App (`3000`) durante desarrollo.
+
 Ejecutar la aplicacion:
 
 ```powershell
