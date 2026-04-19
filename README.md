@@ -1292,6 +1292,8 @@ Actualmente hay pruebas para:
 - Carga del contexto de Spring Boot.
 - Deserializacion del estado `CERRADA` en `EstadoIncidenciaRequest`.
 - Deserializacion del estado `CERRADA` en `EstadoPeticionRequest`.
+- Regla de negocio que impide reabrir incidencias cerradas.
+- Regla de negocio que impide reabrir peticiones cerradas.
 
 ---
 
