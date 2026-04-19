@@ -2,6 +2,7 @@ package com.astropi.astropi.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -13,11 +14,15 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    //Clave secreta (EN PRODUCCION: ponerlo en variable de entorno)
-    private final String SECRET = "astropi_super_secret_key_very_secure_2026_1234567890";
+    private final Key key;
+    private final long expirationMs;
 
-    //Generamos Key a partir de SECRET
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    public JwtUtil(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.expiration-ms}") long expirationMs) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationMs = expirationMs;
+    }
 
     /**
      * Generar un token JWT a partir del username.
@@ -30,7 +35,7 @@ public class JwtUtil {
                 .setSubject(username) //identifica al usuario
                 .claim("role",role)
                 .setIssuedAt(new Date()) //fecha de cracion
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) //Expira en 24h
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs)) //Expira segun configuracion
                 .signWith(key) //firma del token
                 .compact();
     }

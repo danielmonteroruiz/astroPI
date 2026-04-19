@@ -1243,6 +1243,17 @@ Configurar la base de datos en:
 src/main/resources/application.properties
 ```
 
+Configuracion JWT actual:
+
+```properties
+app.jwt.secret=astropi_super_secret_key_very_secure_2026_1234567890
+app.jwt.expiration-ms=86400000
+```
+
+`app.jwt.expiration-ms` esta en milisegundos. El valor `86400000` equivale a 24 horas.
+
+En un entorno real, `app.jwt.secret` deberia moverse a una variable de entorno o a un sistema seguro de secretos.
+
 Ejecutar la aplicacion:
 
 ```powershell
