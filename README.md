@@ -371,6 +371,14 @@ DELETE /admin/usuarios/{id}
 
 Requiere rol `SUPER_ADMIN`.
 
+Tambien se permite acceso si el rol del usuario tiene el permiso granular correspondiente:
+
+- `GESTIONAR_USUARIOS`: endpoints `/admin/usuarios/**`.
+- `GESTIONAR_GRUPOS`: endpoints `/admin/grupos/**`.
+- `GESTIONAR_PERMISOS`: endpoints `/admin/roles/**` y `/admin/permisos/**`.
+
+El rol `SUPER_ADMIN` mantiene acceso total aunque no tenga permisos asignados.
+
 ---
 
 ## Estados de incidencia
@@ -412,6 +420,7 @@ Una incidencia en estado `CERRADA` no puede reabrirse.
 - `PermisoResponse`
 - `AsignarPermisoRequest`
 - `PagedResponse`
+- `MensajeResponse`
 
 ---
 
@@ -700,8 +709,10 @@ Requiere token JWT de usuario con rol `SUPER_ADMIN`.
 
 Si el grupo no tiene usuarios, incidencias ni peticiones asociadas, devuelve:
 
-```http
-204 No Content
+```json
+{
+  "mensaje": "Grupo borrado correctamente"
+}
 ```
 
 Si el grupo tiene datos asociados, devuelve `409 Conflict` con un mensaje claro.

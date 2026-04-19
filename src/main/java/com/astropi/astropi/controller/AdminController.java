@@ -10,6 +10,7 @@ import com.astropi.astropi.controller.dto.admin.PermisoRequest;
 import com.astropi.astropi.controller.dto.admin.PermisoResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
+import com.astropi.astropi.controller.dto.common.MensajeResponse;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.service.GrupoService;
@@ -21,9 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
@@ -56,11 +55,11 @@ public class AdminController {
     }
 
     @DeleteMapping("/grupos/{id}")
-    public ResponseEntity<Void> eliminarGrupo(@PathVariable Long id) {
+    public ResponseEntity<MensajeResponse> eliminarGrupo(@PathVariable Long id) {
 
         grupoService.eliminarGrupo(id);
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new MensajeResponse("Grupo borrado correctamente"));
     }
 
     @GetMapping("/usuarios")
@@ -89,14 +88,11 @@ public class AdminController {
     }
 
     @DeleteMapping("/permisos/{id}")
-    public ResponseEntity<Map<String, String>> eliminarPermiso(@PathVariable Long id) {
+    public ResponseEntity<MensajeResponse> eliminarPermiso(@PathVariable Long id) {
 
         permisoService.eliminarPermiso(id);
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("mensaje", "Permiso borrado correctamente");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new MensajeResponse("Permiso borrado correctamente"));
     }
 
     @PutMapping("/roles/{id}/permisos")
@@ -190,15 +186,12 @@ public class AdminController {
     }
 
     @DeleteMapping("/usuarios/{id}")
-    public ResponseEntity<Map<String, String>> eliminarUsuario(
+    public ResponseEntity<MensajeResponse> eliminarUsuario(
             @PathVariable Long id,
             Authentication authentication) {
 
         usuarioService.eliminarUsuario(id, authentication.getName());
 
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("mensaje", "Usuario borrado correctamente");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new MensajeResponse("Usuario borrado correctamente"));
     }
 }

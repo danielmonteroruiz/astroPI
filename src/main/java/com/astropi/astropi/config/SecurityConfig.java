@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -54,6 +55,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/register").permitAll()
                         .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/admin/usuarios/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_USUARIOS"))
+                        .requestMatchers("/admin/grupos/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_GRUPOS"))
+                        .requestMatchers("/admin/roles/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_PERMISOS"))
+                        .requestMatchers("/admin/permisos/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_PERMISOS"))
                         .requestMatchers("/admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/incidencias/**").authenticated()
                         .requestMatchers("/peticiones/**").authenticated()
@@ -64,6 +69,10 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private WebExpressionAuthorizationManager tieneRolSuperAdminOPermiso(String permiso) {
+        return new WebExpressionAuthorizationManager("hasRole('SUPER_ADMIN') or hasAuthority('" + permiso + "')");
     }
 
     /**
