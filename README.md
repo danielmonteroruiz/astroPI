@@ -133,7 +133,7 @@ Campos:
 - `id`
 - `nombre`
 
-Estado: implementado. Ya existe consulta de grupos y creacion desde admin. Falta edicion, eliminacion y asignaciones avanzadas.
+Estado: implementado a nivel de entidad, consulta autenticada y gestion completa desde admin.
 
 ### Incidencia
 
@@ -257,8 +257,10 @@ Un usuario puede ver:
 
 - Sus propias incidencias.
 - Incidencias asociadas a su grupo.
+- Sus propias peticiones.
+- Peticiones asociadas a su grupo.
 
-Las incidencias solo se pueden consultar y modificar si el usuario autenticado tiene acceso a ellas.
+Los tickets solo se pueden consultar y modificar si el usuario autenticado tiene acceso a ellos.
 
 ---
 
@@ -282,14 +284,20 @@ Las incidencias solo se pueden consultar y modificar si el usuario autenticado t
 - Cambio de estado de peticiones.
 - Consulta de grupos.
 - Creacion de grupos desde admin.
+- Edicion y eliminacion segura de grupos desde admin.
 - Listado de usuarios desde admin.
+- Edicion de datos basicos de usuarios desde admin.
 - Asignacion de grupo a usuarios desde admin.
 - Asignacion de rol a usuarios desde admin.
 - Activacion y desactivacion de usuarios desde admin.
+- Cambio de password y eliminacion segura de usuarios desde admin.
 - Estado `CERRADA`.
 - Regla para evitar reapertura de incidencias cerradas.
+- Regla para evitar reapertura de peticiones cerradas.
 - Creacion y listado de permisos granulares.
 - Asignacion y retirada de permisos por rol.
+- Migraciones de base de datos con Flyway.
+- Datos base e indices de consultas frecuentes.
 - Validaciones con Bean Validation.
 - Uso de DTOs para requests y responses.
 - Manejo basico de errores de validacion.
@@ -1400,23 +1408,21 @@ Uso recomendado:
 | Validaciones incidencias | Implementado |
 | Cambio de estado | Implementado |
 | Filtros y paginacion de tickets | Implementado |
-| Backend usuarios | En progreso |
+| Backend usuarios | Implementado |
 | Backend admin usuarios | Implementado: listado, edicion, asignacion de grupo, asignacion de rol, activacion, cambio de password, eliminacion segura y autoproteccion |
 | Backend grupos | Implementado: listado, creacion, edicion y eliminacion segura |
 | Backend peticiones | Implementado |
-| Permisos granulares | Implementado: entidad, listado, creacion, eliminacion y asignacion por rol |
+| Permisos granulares | Implementado: entidad, listado, creacion, eliminacion, asignacion por rol y proteccion de rutas admin |
 | Frontend React | Pendiente |
 
 ---
 
 ## Proximas mejoras
 
-- Revisar reglas avanzadas de grupos si el panel admin necesita mas restricciones.
-- Aplicar permisos granulares a reglas concretas de negocio si el panel admin lo requiere.
-- Crear panel de administracion para `SUPER_ADMIN`.
-- Preparar coleccion de Postman.
-- Valorar Flyway o Liquibase para migraciones de base de datos.
-- Desarrollar frontend en React.
+- Exportar entorno Postman separado con variables (`baseUrl`, `token`).
+- Revisar si compensa anadir tests de integracion sobre repositorios y filtros complejos.
+- Preparar frontend en React consumiendo la API actual.
+- Mover secretos sensibles (`datasource.password`, `app.jwt.secret`) a variables de entorno para entornos reales.
 
 ---
 

@@ -6,9 +6,10 @@ El bloque de peticiones permite:
 
 - Crear peticiones autenticadas.
 - Listar peticiones propias.
-- Listar peticiones propias y del grupo del usuario.
+- Listar peticiones propias y del grupo del usuario con filtros y paginacion.
 - Cambiar el estado de una peticion.
 - Generar codigo automatico con formato `P-YYYYMMDD-0001`.
+- Mantener numeracion continua aunque cambie el dia.
 - Validar los datos de entrada con Bean Validation.
 - Proteger los endpoints con JWT.
 
@@ -43,6 +44,17 @@ GET /peticiones/mis-peticiones
 ```http
 GET /peticiones
 ```
+
+Filtros disponibles:
+
+- `estado`
+- `servicio`
+- `categoria`
+- `grupoId`
+- `fechaDesde`
+- `fechaHasta`
+- `page`
+- `size`
 
 ### Cambiar estado
 
@@ -89,6 +101,13 @@ En Postman:
 
 - `estado`: obligatorio y debe coincidir con un valor de `EstadoPeticion`.
 
+Reglas funcionales:
+
+- Una peticion `CERRADA` no puede volver a un estado anterior.
+- `fechaDesde` no puede ser posterior a `fechaHasta`.
+- `page` no puede ser negativo.
+- `size` debe estar entre `1` y `100`.
+
 ## Nota para DBeaver y PostgreSQL
 
 Si PostgreSQL crea o mantiene una constraint de estados antigua, revisar la tabla `peticiones` en DBeaver.
@@ -98,3 +117,5 @@ Los estados esperados son:
 ```text
 ABIERTA, EN_PROCESO, PARADA, RESUELTA, CERRADA
 ```
+
+En bases nuevas, la constraint correcta ya queda cubierta por la migracion inicial `V1__init_schema.sql`.
