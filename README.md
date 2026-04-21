@@ -66,6 +66,7 @@ Base de datos PostgreSQL
 - DBeaver para gestion de base de datos
 
 El backend funciona como API REST y no usa motor de plantillas HTML.
+La gestion de JWT usa la libreria `jjwt` moderna (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`) sin dependencias legacy duplicadas.
 
 ---
 
@@ -1294,8 +1295,26 @@ Actualmente hay pruebas para:
 - Deserializacion del estado `CERRADA` en `EstadoPeticionRequest`.
 - Regla de negocio que impide reabrir incidencias cerradas.
 - Regla de negocio que impide reabrir peticiones cerradas.
+- Regla de validacion que impide usar un rango de fechas invalido en incidencias.
+- Regla de validacion que impide usar un rango de fechas invalido en peticiones.
+- Regla de validacion que impide usar una pagina negativa en incidencias y peticiones.
+- Regla de validacion que impide usar un tamano de pagina fuera de rango en incidencias y peticiones.
+- Reglas de seguridad HTTP del panel admin para acceso no autenticado, sin permiso y con permiso correcto en usuarios, grupos y permisos.
+- Validaciones HTTP del panel admin para bodies invalidos y campos no permitidos en grupos y permisos.
+- Validaciones HTTP del panel admin para edicion de usuarios y cambio de password.
+- Flujos HTTP de autenticacion para login correcto, credenciales invalidas, usuario desactivado y acceso a /auth/me.
+- Validaciones HTTP de autenticacion para login y register con campos obligatorios, formato invalido y campos no permitidos.
 - Regla de seguridad que impide a un administrador desactivar su propio usuario.
 - Regla de seguridad que impide a un `SUPER_ADMIN` quitarse su propio rol.
+- Regla de seguridad que impide eliminar al ultimo `SUPER_ADMIN` activo.
+- Regla de seguridad que impide eliminar usuarios con incidencias asociadas.
+- Regla de seguridad que impide eliminar usuarios con peticiones asociadas.
+- Regla de seguridad que impide eliminar grupos con usuarios asociados.
+- Regla de seguridad que impide eliminar grupos con incidencias asociadas.
+- Regla de seguridad que impide eliminar grupos con peticiones asociadas.
+- Regla de negocio que impide crear permisos duplicados.
+- Regla de negocio que impide eliminar permisos asignados a roles.
+- Asignacion y retirada de permisos en roles.
 
 ---
 

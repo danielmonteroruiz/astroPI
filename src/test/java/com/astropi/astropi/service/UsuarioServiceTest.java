@@ -72,14 +72,62 @@ class UsuarioServiceTest {
                 .hasMessageContaining("No puedes quitarte tu propio rol SUPER_ADMIN");
     }
 
-    private Usuario crearUsuario(String username, String nombreRol, boolean activo) {
+    @Test
+    void noDeberiaEliminarAlUltimoSuperAdminActivo() {
+
+        // Comprueba que el sistema no se quede sin ningun SUPER_ADMIN activo.
+        Usuario admin = crearUsuario(1L, "admin", "SUPER_ADMIN", true);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(usuarioRepository.countByRolNombreAndActivoTrue("SUPER_ADMIN")).thenReturn(1L);
+
+        assertThatThrownBy(() -> usuarioService.eliminarUsuario(1L, "otroAdmin"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Debe existir al menos un SUPER_ADMIN activo");
+    }
+
+    @Test
+    void noDeberiaEliminarUsuarioConIncidenciasAsociadas() {
+
+        // Comprueba que no se borre un usuario que todavia tiene incidencias relacionadas.
+        Usuario usuario = crearUsuario(2L, "usuario1", "USER", true);
+
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(usuario));
+        when(incidenciaRepository.existsByUsuarioId(2L)).thenReturn(true);
+
+        assertThatThrownBy(() -> usuarioService.eliminarUsuario(2L, "admin"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("No se puede eliminar un usuario con incidencias asociadas");
+    }
+
+    @Test
+    void noDeberiaEliminarUsuarioConPeticionesAsociadas() {
+
+        // Comprueba que no se borre un usuario que todavia tiene peticiones relacionadas.
+        Usuario usuario = crearUsuario(3L, "usuario2", "USER", true);
+
+        when(usuarioRepository.findById(3L)).thenReturn(Optional.of(usuario));
+        when(incidenciaRepository.existsByUsuarioId(3L)).thenReturn(false);
+        when(peticionRepository.existsByUsuarioId(3L)).thenReturn(true);
+
+        assertThatThrownBy(() -> usuarioService.eliminarUsuario(3L, "admin"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("No se puede eliminar un usuario con peticiones asociadas");
+    }
+
+    private Usuario crearUsuario(Long id, String username, String nombreRol, boolean activo) {
 
         Usuario usuario = new Usuario();
+        usuario.setId(id);
         usuario.setUsername(username);
         usuario.setRol(crearRol(nombreRol));
         usuario.setActivo(activo);
 
         return usuario;
+    }
+
+    private Usuario crearUsuario(String username, String nombreRol, boolean activo) {
+        return crearUsuario(null, username, nombreRol, activo);
     }
 
     private Rol crearRol(String nombre) {

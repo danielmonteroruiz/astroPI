@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,6 +48,75 @@ class PeticionServiceTest {
         assertThatThrownBy(() -> peticionService.actualizarEstado(1L, EstadoPeticion.ABIERTA, "usuario1"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Una peticion cerrada no puede reabrirse");
+    }
+
+    @Test
+    void noDeberiaAceptarRangoDeFechasInvalido() {
+
+        // Comprueba que el filtro rechaza una fechaDesde posterior a fechaHasta.
+        Usuario usuario = crearUsuario("usuario1");
+
+        when(usuarioRepository.findByUsername("usuario1")).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> peticionService.obtenerPeticionesUsuarioYGrupo(
+                "usuario1",
+                null,
+                null,
+                null,
+                null,
+                LocalDate.of(2026, 4, 22),
+                LocalDate.of(2026, 4, 21),
+                0,
+                10
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("fechaDesde no puede ser posterior a fechaHasta");
+    }
+
+    @Test
+    void noDeberiaAceptarPaginaNegativa() {
+
+        // Comprueba que el filtro rechaza un numero de pagina negativo.
+        Usuario usuario = crearUsuario("usuario1");
+
+        when(usuarioRepository.findByUsername("usuario1")).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> peticionService.obtenerPeticionesUsuarioYGrupo(
+                "usuario1",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                -1,
+                10
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("page no puede ser negativo");
+    }
+
+    @Test
+    void noDeberiaAceptarTamanoDePaginaFueraDeRango() {
+
+        // Comprueba que el filtro rechaza un size fuera del rango permitido.
+        Usuario usuario = crearUsuario("usuario1");
+
+        when(usuarioRepository.findByUsername("usuario1")).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> peticionService.obtenerPeticionesUsuarioYGrupo(
+                "usuario1",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                0,
+                101
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("size debe estar entre 1 y 100");
     }
 
     private Usuario crearUsuario(String username) {
