@@ -1219,6 +1219,7 @@ Datos base adicionales:
 ```text
 src/main/resources/db/migration/V2__seed_base_data.sql
 src/main/resources/db/migration/V3__seed_superadmin.sql
+src/main/resources/db/migration/V4__tighten_core_constraints.sql
 ```
 
 Comportamiento previsto:
@@ -1241,6 +1242,15 @@ La `V3` crea un usuario inicial `superadmin` solo si todavia no existe:
 - `grupo`: `Administradores` si existe, o `Sistemas IT` como respaldo
 
 Conviene cambiar esa password inicial despues del primer acceso.
+
+La `V4` endurece restricciones del esquema en tablas base:
+
+- `roles.nombre` unico y obligatorio
+- `grupos.nombre` unico y obligatorio
+- `usuarios.username` unico y obligatorio
+- `usuarios.dni` unico y obligatorio
+- `usuarios.email` unico si se informa
+- `usuarios.password`, `nombre`, `apellidos`, `activo`, `rol_id` y `grupo_id` obligatorios
 
 Nota importante:
 
