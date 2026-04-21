@@ -8,7 +8,15 @@ import java.time.LocalDateTime;
  * Entidad que representa una peticion en el sistema HelpDesk.
  */
 @Entity
-@Table(name = "peticiones")
+@Table(
+        name = "peticiones",
+        indexes = {
+                @Index(name = "idx_peticiones_usuario_id", columnList = "usuario_id"),
+                @Index(name = "idx_peticiones_grupo_id", columnList = "grupo_id"),
+                @Index(name = "idx_peticiones_estado", columnList = "estado"),
+                @Index(name = "idx_peticiones_fecha_creacion", columnList = "fecha_creacion")
+        }
+)
 public class Peticion {
 
     @Id

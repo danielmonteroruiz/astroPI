@@ -4,7 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "usuarios")
+@Table(
+        name = "usuarios",
+        indexes = {
+                @Index(name = "idx_usuarios_grupo_id", columnList = "grupo_id"),
+                @Index(name = "idx_usuarios_rol_id_activo", columnList = "rol_id, activo")
+        }
+)
 @Data
 
 public class Usuario {

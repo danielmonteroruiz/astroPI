@@ -1220,6 +1220,7 @@ Datos base adicionales:
 src/main/resources/db/migration/V2__seed_base_data.sql
 src/main/resources/db/migration/V3__seed_superadmin.sql
 src/main/resources/db/migration/V4__tighten_core_constraints.sql
+src/main/resources/db/migration/V5__add_query_indexes.sql
 ```
 
 Comportamiento previsto:
@@ -1251,6 +1252,13 @@ La `V4` endurece restricciones del esquema en tablas base:
 - `usuarios.dni` unico y obligatorio
 - `usuarios.email` unico si se informa
 - `usuarios.password`, `nombre`, `apellidos`, `activo`, `rol_id` y `grupo_id` obligatorios
+
+La `V5` anade indices para consultas frecuentes:
+
+- `usuarios(grupo_id)`
+- `usuarios(rol_id, activo)`
+- `incidencias(usuario_id)`, `incidencias(grupo_id)`, `incidencias(estado)`, `incidencias(fecha_creacion)`
+- `peticiones(usuario_id)`, `peticiones(grupo_id)`, `peticiones(estado)`, `peticiones(fecha_creacion)`
 
 Nota importante:
 

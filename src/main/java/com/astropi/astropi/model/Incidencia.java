@@ -8,7 +8,15 @@ import java.time.LocalDateTime;
  * Entidad que representa una incidencia en el sistema (HelpDesk).
  */
 @Entity
-@Table(name = "incidencias")
+@Table(
+        name = "incidencias",
+        indexes = {
+                @Index(name = "idx_incidencias_usuario_id", columnList = "usuario_id"),
+                @Index(name = "idx_incidencias_grupo_id", columnList = "grupo_id"),
+                @Index(name = "idx_incidencias_estado", columnList = "estado"),
+                @Index(name = "idx_incidencias_fecha_creacion", columnList = "fecha_creacion")
+        }
+)
 public class Incidencia {
 
     @Id
