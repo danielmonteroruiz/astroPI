@@ -12,7 +12,12 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app.cors")
 public class CorsProperties {
 
-    private List<String> allowedOrigins = List.of("http://localhost:5173", "http://localhost:3000");
+    private List<String> allowedOrigins = List.of(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:4173",
+            "http://127.0.0.1:4173"
+    );
 
     public List<String> getAllowedOrigins() {
         return allowedOrigins;
