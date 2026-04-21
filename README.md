@@ -67,6 +67,7 @@ Base de datos PostgreSQL
 
 El backend funciona como API REST y no usa motor de plantillas HTML.
 La gestion de JWT usa la libreria `jjwt` moderna (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`) sin dependencias legacy duplicadas.
+Los tests usan Mockito configurado como `javaagent` en Maven Surefire para evitar avisos de self-attach en Java recientes.
 
 ---
 
@@ -1198,9 +1199,27 @@ Configuracion actual:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/astroPI_DB
 spring.datasource.username=postgres
-spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.open-in-view=false
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=1
 ```
+
+Nota importante:
+
+Ahora el esquema se gestiona con Flyway. La migracion inicial esta en:
+
+```text
+src/main/resources/db/migration/V1__init_schema.sql
+```
+
+Comportamiento previsto:
+
+- Base vacia: Flyway ejecuta `V1__init_schema.sql` y crea el esquema inicial.
+- Base ya existente sin historial de Flyway: se aplica `baseline-on-migrate` para no romper el entorno actual.
+
+`ddl-auto=validate` se mantiene para que Hibernate compruebe que el esquema real sigue alineado con las entidades.
 
 Nota importante:
 
