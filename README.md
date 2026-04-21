@@ -1218,6 +1218,7 @@ Datos base adicionales:
 
 ```text
 src/main/resources/db/migration/V2__seed_base_data.sql
+src/main/resources/db/migration/V3__seed_superadmin.sql
 ```
 
 Comportamiento previsto:
@@ -1231,6 +1232,15 @@ La `V2` deja sembrados grupos y permisos base del proyecto:
 
 - Grupos: `Administradores`, `Desarrollo`, `Contabilidad`
 - Permisos: `GESTIONAR_USUARIOS`, `GESTIONAR_GRUPOS`, `GESTIONAR_PERMISOS`
+
+La `V3` crea un usuario inicial `superadmin` solo si todavia no existe:
+
+- `username`: `superadmin`
+- `password`: `admin123`
+- `rol`: `SUPER_ADMIN`
+- `grupo`: `Administradores` si existe, o `Sistemas IT` como respaldo
+
+Conviene cambiar esa password inicial despues del primer acceso.
 
 Nota importante:
 

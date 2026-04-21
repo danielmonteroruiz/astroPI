@@ -98,7 +98,9 @@ Ejemplo real:
 ERROR: el nuevo registro para la relacion "incidencias" viola la restriccion "incidencias_estado_check"
 ```
 
-Esto ocurre porque `spring.jpa.hibernate.ddl-auto=update` no siempre actualiza constraints existentes.
+Esto ocurrio cuando el proyecto todavia dependia de cambios automaticos sobre el esquema y PostgreSQL mantuvo una constraint antigua.
+
+Ahora el proyecto usa Flyway y `spring.jpa.hibernate.ddl-auto=validate`, pero este SQL sigue siendo util si necesitas corregir una base local antigua que arrastras de versiones previas.
 
 En DBeaver, abrir un SQL Editor sobre la base de datos `astroPI_DB` y ejecutar:
 
