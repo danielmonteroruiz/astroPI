@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
         name = "peticiones",
         indexes = {
                 @Index(name = "idx_peticiones_usuario_id", columnList = "usuario_id"),
+                @Index(name = "idx_peticiones_usuario_asignado_id", columnList = "usuario_asignado_id"),
                 @Index(name = "idx_peticiones_grupo_id", columnList = "grupo_id"),
                 @Index(name = "idx_peticiones_estado", columnList = "estado"),
                 @Index(name = "idx_peticiones_fecha_creacion", columnList = "fecha_creacion")
@@ -49,8 +50,16 @@ public class Peticion {
     private Usuario usuario;
 
     @ManyToOne
+    @JoinColumn(name = "usuario_asignado_id")
+    private Usuario usuarioAsignado;
+
+    @ManyToOne
     @JoinColumn(name = "grupo_id", nullable = false)
     private Grupo grupo;
+
+    @OneToMany(mappedBy = "peticion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("fechaCreacion ASC")
+    private java.util.List<ComentarioPeticion> comentarios = new java.util.ArrayList<>();
 
     private LocalDateTime fechaCreacion;
 
@@ -125,12 +134,28 @@ public class Peticion {
         this.usuario = usuario;
     }
 
+    public Usuario getUsuarioAsignado() {
+        return usuarioAsignado;
+    }
+
+    public void setUsuarioAsignado(Usuario usuarioAsignado) {
+        this.usuarioAsignado = usuarioAsignado;
+    }
+
     public Grupo getGrupo() {
         return grupo;
     }
 
     public void setGrupo(Grupo grupo) {
         this.grupo = grupo;
+    }
+
+    public java.util.List<ComentarioPeticion> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(java.util.List<ComentarioPeticion> comentarios) {
+        this.comentarios = comentarios;
     }
 
     public LocalDateTime getFechaCreacion() {

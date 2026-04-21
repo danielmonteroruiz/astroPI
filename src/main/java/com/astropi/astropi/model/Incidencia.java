@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
         name = "incidencias",
         indexes = {
                 @Index(name = "idx_incidencias_usuario_id", columnList = "usuario_id"),
+                @Index(name = "idx_incidencias_usuario_asignado_id", columnList = "usuario_asignado_id"),
                 @Index(name = "idx_incidencias_grupo_id", columnList = "grupo_id"),
                 @Index(name = "idx_incidencias_estado", columnList = "estado"),
                 @Index(name = "idx_incidencias_fecha_creacion", columnList = "fecha_creacion")
@@ -54,6 +55,10 @@ public class Incidencia {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    @ManyToOne
+    @JoinColumn(name = "usuario_asignado_id")
+    private Usuario usuarioAsignado;
+
     @Column(nullable = false, length = 100)
     private String servicio;
 
@@ -63,6 +68,10 @@ public class Incidencia {
     @ManyToOne
     @JoinColumn(name = "grupo_id", nullable = false)
     private Grupo grupo;
+
+    @OneToMany(mappedBy = "incidencia", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("fechaCreacion ASC")
+    private java.util.List<ComentarioIncidencia> comentarios = new java.util.ArrayList<>();
     /**
      * Fecha de creación automática.
      */
@@ -126,6 +135,14 @@ public class Incidencia {
         this.usuario = usuario;
     }
 
+    public Usuario getUsuarioAsignado() {
+        return usuarioAsignado;
+    }
+
+    public void setUsuarioAsignado(Usuario usuarioAsignado) {
+        this.usuarioAsignado = usuarioAsignado;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
@@ -152,6 +169,14 @@ public class Incidencia {
 
     public void setGrupo(Grupo grupo) {
         this.grupo = grupo;
+    }
+
+    public java.util.List<ComentarioIncidencia> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(java.util.List<ComentarioIncidencia> comentarios) {
+        this.comentarios = comentarios;
     }
 
 }

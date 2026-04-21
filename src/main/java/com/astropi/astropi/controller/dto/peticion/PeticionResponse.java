@@ -1,8 +1,10 @@
 package com.astropi.astropi.controller.dto.peticion;
 
+import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @JsonPropertyOrder({
         "id",
@@ -14,6 +16,8 @@ import java.time.LocalDateTime;
         "estado",
         "grupo",
         "usuario",
+        "usuarioAsignado",
+        "comentarios",
         "fechaCreacion"
 })
 public class PeticionResponse {
@@ -27,6 +31,8 @@ public class PeticionResponse {
     private String estado;
     private String grupo;
     private String usuario;
+    private String usuarioAsignado;
+    private List<ComentarioResponse> comentarios;
     private LocalDateTime fechaCreacion;
 
     public Long getId() {
@@ -99,6 +105,22 @@ public class PeticionResponse {
 
     public void setUsuario(String usuario) {
         this.usuario = usuario;
+    }
+
+    public String getUsuarioAsignado() {
+        return usuarioAsignado;
+    }
+
+    public void setUsuarioAsignado(String usuarioAsignado) {
+        this.usuarioAsignado = usuarioAsignado;
+    }
+
+    public List<ComentarioResponse> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(List<ComentarioResponse> comentarios) {
+        this.comentarios = comentarios;
     }
 
     public LocalDateTime getFechaCreacion() {

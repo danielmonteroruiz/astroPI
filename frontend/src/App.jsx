@@ -4,12 +4,19 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-r
 const TOKEN_KEY = "astropi_token";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const ESTADOS_TICKET = ["ABIERTA", "EN_PROCESO", "PARADA", "RESUELTA", "CERRADA"];
-const SERVICIOS_CATEGORIAS = {
-  Autenticacion: ["Error de login", "Recuperacion de acceso", "Alta de credenciales"],
-  Infraestructura: ["Red", "Servidor", "VPN"],
-  Hardware: ["Portatil", "Monitor", "Perifericos"],
-  Software: ["Instalacion", "Licencia", "Actualizacion"],
-  Accesos: ["Alta de permisos", "Cambio de permisos", "Baja de permisos"]
+const CATALOGOS_TICKETS = {
+  incidencias: {
+    Autenticacion: ["Error de login", "Recuperacion de acceso", "Bloqueo de cuenta"],
+    Infraestructura: ["Red", "Servidor", "VPN"],
+    Hardware: ["Portatil", "Monitor", "Perifericos"],
+    Software: ["Instalacion fallida", "Error de aplicacion", "Actualizacion"]
+  },
+  peticiones: {
+    Accesos: ["Alta de permisos", "Cambio de permisos", "Baja de permisos"],
+    Software: ["Nueva licencia", "Instalacion de aplicacion", "Actualizacion programada"],
+    Hardware: ["Solicitud de portatil", "Solicitud de monitor", "Solicitud de perifericos"],
+    Cuentas: ["Alta de usuario", "Cambio de datos", "Restablecimiento de password"]
+  }
 };
 
 async function apiRequest(path, options = {}) {
@@ -175,15 +182,19 @@ function Dashboard({ incidencias, peticiones }) {
 }
 
 function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStatus }) {
+  const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
+  const catalogo = CATALOGOS_TICKETS[endpoint];
+  const servicios = Object.keys(catalogo);
+
   const initialForm = useMemo(
     () => ({
       titulo: "",
       descripcion: "",
-      servicio: Object.keys(SERVICIOS_CATEGORIAS)[0],
-      categoria: SERVICIOS_CATEGORIAS[Object.keys(SERVICIOS_CATEGORIAS)[0]][0],
+      servicio: servicios[0],
+      categoria: catalogo[servicios[0]][0],
       grupoId: groups[0]?.id || ""
     }),
-    [groups]
+    [catalogo, groups, servicios]
   );
 
   const [form, setForm] = useState(initialForm);
@@ -205,7 +216,7 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
   function updateField(field, value) {
     setForm((current) => {
       if (field === "servicio") {
-        const categorias = SERVICIOS_CATEGORIAS[value] || [];
+        const categorias = catalogo[value] || [];
         return {
           ...current,
           servicio: value,
@@ -235,7 +246,7 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
         ...initialForm,
         grupoId: groups[0]?.id || ""
       });
-      setMessage(`${title.slice(0, -1)} creada correctamente`);
+      setMessage(`${singularTitle} creada correctamente`);
       await onRefresh(filters);
     } catch (requestError) {
       setError(requestError.message);
@@ -253,7 +264,7 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
       <form className="editor-panel" onSubmit={handleCreate}>
         <div className="section-heading">
           <p className="eyebrow">{title}</p>
-          <h2>Crear {title.slice(0, -1).toLowerCase()}</h2>
+          <h2>Crear {singularTitle}</h2>
         </div>
         <label>
           <span>Titulo</span>
@@ -280,7 +291,7 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
               onChange={(event) => updateField("servicio", event.target.value)}
               required
             >
-              {Object.keys(SERVICIOS_CATEGORIAS).map((servicio) => (
+              {servicios.map((servicio) => (
                 <option key={servicio} value={servicio}>
                   {servicio}
                 </option>
@@ -294,7 +305,7 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
               onChange={(event) => updateField("categoria", event.target.value)}
               required
             >
-              {(SERVICIOS_CATEGORIAS[form.servicio] || []).map((categoria) => (
+              {(catalogo[form.servicio] || []).map((categoria) => (
                 <option key={categoria} value={categoria}>
                   {categoria}
                 </option>
