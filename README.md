@@ -1214,12 +1214,23 @@ Ahora el esquema se gestiona con Flyway. La migracion inicial esta en:
 src/main/resources/db/migration/V1__init_schema.sql
 ```
 
+Datos base adicionales:
+
+```text
+src/main/resources/db/migration/V2__seed_base_data.sql
+```
+
 Comportamiento previsto:
 
 - Base vacia: Flyway ejecuta `V1__init_schema.sql` y crea el esquema inicial.
-- Base ya existente sin historial de Flyway: se aplica `baseline-on-migrate` para no romper el entorno actual.
+- Base ya existente sin historial de Flyway: se aplica `baseline-on-migrate` para no romper el entorno actual y despues se ejecutan migraciones nuevas como `V2`.
 
 `ddl-auto=validate` se mantiene para que Hibernate compruebe que el esquema real sigue alineado con las entidades.
+
+La `V2` deja sembrados grupos y permisos base del proyecto:
+
+- Grupos: `Administradores`, `Desarrollo`, `Contabilidad`
+- Permisos: `GESTIONAR_USUARIOS`, `GESTIONAR_GRUPOS`, `GESTIONAR_PERMISOS`
 
 Nota importante:
 
