@@ -1374,6 +1374,19 @@ Actualmente hay pruebas para:
 - Regla de negocio que impide eliminar permisos asignados a roles.
 - Asignacion y retirada de permisos en roles.
 
+Coleccion Postman disponible:
+
+```text
+docs/postman/AstroPI.postman_collection.json
+```
+
+Uso recomendado:
+
+1. Importar la coleccion en Postman.
+2. Revisar la variable `baseUrl`.
+3. Ejecutar `Auth -> Login` para guardar automaticamente `token`.
+4. Probar el resto de carpetas con el mismo token.
+
 ---
 
 ## Estado del proyecto

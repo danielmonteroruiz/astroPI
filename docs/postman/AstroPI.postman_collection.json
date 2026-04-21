@@ -1,0 +1,581 @@
+{
+  "info": {
+    "_postman_id": "5aaf2db5-fb33-4f13-beb3-fbe33f07c0aa",
+    "name": "AstroPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"superadmin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var data = pm.response.json();",
+                  "if (data.token) {",
+                  "    pm.collectionVariables.set('token', data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"usuario_nuevo\",\n  \"nombre\": \"Nuevo\",\n  \"apellidos\": \"Usuario\",\n  \"email\": \"nuevo@astropi.com\",\n  \"dni\": \"99999999Z\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Grupos",
+      "item": [
+        {
+          "name": "Listar Grupos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/grupos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "grupos"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Incidencias",
+      "item": [
+        {
+          "name": "Crear Incidencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Error al iniciar sesion\",\n  \"descripcion\": \"El usuario no puede acceder a la aplicacion\",\n  \"servicio\": \"Autenticacion\",\n  \"categoria\": \"Bug\",\n  \"grupoId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidencias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidencias"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mis Incidencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidencias/mis-incidencias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidencias",
+                "mis-incidencias"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Incidencias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/incidencias?estado=ABIERTA&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidencias"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "ABIERTA"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cambiar Estado Incidencia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESUELTA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/incidencias/1/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "incidencias",
+                "1",
+                "estado"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Peticiones",
+      "item": [
+        {
+          "name": "Crear Peticion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Solicitar nuevo acceso\",\n  \"descripcion\": \"Necesito acceso al panel de reporting\",\n  \"servicio\": \"Accesos\",\n  \"categoria\": \"Alta de permisos\",\n  \"grupoId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/peticiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "peticiones"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mis Peticiones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/peticiones/mis-peticiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "peticiones",
+                "mis-peticiones"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Peticiones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/peticiones?estado=ABIERTA&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "peticiones"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "ABIERTA"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cambiar Estado Peticion",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"RESUELTA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/peticiones/1/estado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "peticiones",
+                "1",
+                "estado"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "usuarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "roles"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar Permisos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "permisos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear Grupo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Soporte\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/grupos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "grupos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear Permiso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"GESTIONAR_TEST\",\n  \"descripcion\": \"Permiso de prueba\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/permisos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "permisos"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Asignar Grupo a Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grupoId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/usuarios/1/grupo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "usuarios",
+                "1",
+                "grupo"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cambiar Password Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"nuevaPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/usuarios/1/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "usuarios",
+                "1",
+                "password"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
