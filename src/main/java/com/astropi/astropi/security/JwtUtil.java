@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
@@ -44,6 +46,10 @@ public class JwtUtil {
         return extractAllClaims(token).get("role", String.class);
     }
 
+    public Date extractIssuedAt(String token) {
+        return extractAllClaims(token).getIssuedAt();
+    }
+
     /**
      * Extrae el username del token JWT.
      *
@@ -71,6 +77,17 @@ public class JwtUtil {
         final String extractedUsername = extractUsername(token);
 
         return (extractedUsername.equals(username) && !isTokenExpired(token));
+    }
+
+    public boolean fueEmitidoAntesDeCambioCredenciales(String token, LocalDateTime credencialesActualizadasEn) {
+        if (credencialesActualizadasEn == null) {
+            return false;
+        }
+
+        Date issuedAt = extractIssuedAt(token);
+        Date fechaCredenciales = Date.from(credencialesActualizadasEn.atZone(ZoneId.systemDefault()).toInstant());
+
+        return issuedAt.before(fechaCredenciales);
     }
 
     /**

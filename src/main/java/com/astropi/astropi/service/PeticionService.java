@@ -103,6 +103,23 @@ public class PeticionService {
         return mapToResponse(peticionRepository.save(peticion));
     }
 
+    public PeticionResponse crearSolicitudRecuperacionPasswordSensitiva(Usuario usuario, ForgotPasswordRequest request) {
+        Grupo grupo = grupoRepository.findByNombre("Administradores")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo Administradores no encontrado"));
+
+        Peticion peticion = new Peticion();
+        peticion.setTitulo("Validacion manual de recuperacion: " + usuario.getUsername());
+        peticion.setDescripcion(construirDescripcionRecuperacionPasswordSensitiva(usuario, request));
+        peticion.setServicio("Cuentas");
+        peticion.setCategoria("Restablecimiento de password");
+        peticion.setEstado(EstadoPeticion.ABIERTA);
+        peticion.setGrupo(grupo);
+        peticion.setCodigoTicket(generarCodigoTicket());
+        peticion.setFechaCreacion(LocalDateTime.now());
+
+        return mapToResponse(peticionRepository.save(peticion));
+    }
+
     public List<PeticionResponse> obtenerMisPeticiones(String username) {
         List<Peticion> peticiones = peticionRepository.findByUsuarioUsername(username);
 
@@ -308,6 +325,15 @@ public class PeticionService {
         return "Solicitud de recuperacion de password enviada desde el login.\n"
                 + "Username: " + request.getUsername() + "\n"
                 + "Email de contacto: " + (request.getEmail() == null ? "" : request.getEmail());
+    }
+
+    private String construirDescripcionRecuperacionPasswordSensitiva(Usuario usuario, ForgotPasswordRequest request) {
+        return "Solicitud sensible de recuperacion de password.\n"
+                + "Username: " + usuario.getUsername() + "\n"
+                + "Email registrado: " + (usuario.getEmail() == null ? "" : usuario.getEmail()) + "\n"
+                + "Email informado: " + (request.getEmail() == null ? "" : request.getEmail()) + "\n"
+                + "Rol: " + (usuario.getRol() == null ? "" : usuario.getRol().getNombre()) + "\n"
+                + "Requiere validacion manual por SUPER_ADMIN.";
     }
 
     private String generarCodigoTicket() {

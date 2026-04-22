@@ -61,7 +61,7 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register").permitAll()
+                        .requestMatchers("/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/auth/reset-password/validate").permitAll()
                         .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/admin/usuarios/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_USUARIOS"))

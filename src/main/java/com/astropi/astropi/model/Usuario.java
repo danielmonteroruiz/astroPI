@@ -40,6 +40,9 @@ public class Usuario {
     @Column(name = "activo", nullable = false)
     private Boolean activo;
 
+    @Column(name = "credenciales_actualizadas_en", nullable = false)
+    private java.time.LocalDateTime credencialesActualizadasEn;
+
     @ManyToOne
     @JoinColumn(name = "rol_id", nullable = false)
     private Rol rol;

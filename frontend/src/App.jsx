@@ -173,6 +173,30 @@ function parseUserRequestDescription(descripcion) {
   return data;
 }
 
+function parsePasswordResetRequestDescription(descripcion) {
+  const lines = (descripcion || "").split("\n");
+  const data = {
+    username: "",
+    email: ""
+  };
+
+  lines.forEach((line) => {
+    const [label, ...rest] = line.split(":");
+    const value = rest.join(":").trim();
+    const normalizedLabel = (label || "").trim().toLowerCase();
+
+    if (normalizedLabel === "username") {
+      data.username = value;
+    } else if (normalizedLabel === "email registrado" || normalizedLabel === "email informado" || normalizedLabel === "email de contacto") {
+      if (!data.email && value) {
+        data.email = value;
+      }
+    }
+  });
+
+  return data;
+}
+
 function ProtectedRoute({ user, children }) {
   const location = useLocation();
 
@@ -375,7 +399,6 @@ function LoginPage({
                   onChange={(event) =>
                     setForgotPasswordForm((current) => ({ ...current, username: event.target.value }))
                   }
-                  required
                 />
               </label>
               <label>
@@ -395,6 +418,109 @@ function LoginPage({
               </button>
             </form>
           )}
+        </div>
+      </section>
+      <footer className="app-footer login-footer">
+        <p>Copyright © 2026 Daniel Montero. Todos los derechos reservados.</p>
+      </footer>
+    </main>
+  );
+}
+
+function ResetPasswordPage({ onResetPassword, loading, error, successMessage }) {
+  const location = useLocation();
+  const token = useMemo(() => new URLSearchParams(location.search).get("token") || "", [location.search]);
+  const [tokenError, setTokenError] = useState("");
+  const [tokenChecked, setTokenChecked] = useState(false);
+  const [form, setForm] = useState({
+    password: "",
+    confirmacionPassword: ""
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    async function validateToken() {
+      if (!token) {
+        if (active) {
+          setTokenError("Falta el token de recuperacion");
+          setTokenChecked(true);
+        }
+        return;
+      }
+
+      try {
+        await apiRequest(`/auth/reset-password/validate?token=${encodeURIComponent(token)}`);
+        if (active) {
+          setTokenError("");
+          setTokenChecked(true);
+        }
+      } catch (requestError) {
+        if (active) {
+          setTokenError(requestError.message);
+          setTokenChecked(true);
+        }
+      }
+    }
+
+    validateToken();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    await onResetPassword({
+      token,
+      password: form.password,
+      confirmacionPassword: form.confirmacionPassword
+    });
+  }
+
+  return (
+    <main className="login-shell">
+      <section className="login-hero">
+        <div className="login-copy">
+          <img className="brand-logo brand-logo-login" src="/astropi-logo.png" alt="AstroPI" />
+          <h1>Define una nueva password.</h1>
+          <p className="login-text">
+            El enlace solo puede usarse una vez y caduca en poco tiempo.
+          </p>
+        </div>
+        <div className="login-form">
+          <form className="stack-form" onSubmit={handleSubmit}>
+            <label>
+              <span>Nueva password</span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                required
+              />
+            </label>
+            <label>
+              <span>Confirmar nueva password</span>
+              <input
+                type="password"
+                value={form.confirmacionPassword}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, confirmacionPassword: event.target.value }))
+                }
+                required
+              />
+            </label>
+            {successMessage ? <p className="form-success">{successMessage}</p> : null}
+            {tokenChecked && tokenError ? <p className="form-error">{tokenError}</p> : null}
+            {error ? <p className="form-error">{error}</p> : null}
+            <button className="primary-button" type="submit" disabled={loading || !token || Boolean(tokenError)}>
+              {loading ? "Actualizando..." : "Guardar nueva password"}
+            </button>
+            <Link className="secondary-button" to="/login">
+              Volver al login
+            </Link>
+          </form>
         </div>
       </section>
       <footer className="app-footer login-footer">
@@ -1318,16 +1444,22 @@ function TicketDetail({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
-  onCreateUserFromTicket
+  onCreateUserFromTicket,
+  onSendResetLinkFromTicket
 }) {
   const userRequestData = useMemo(
     () => parseUserRequestDescription(ticket.descripcion),
+    [ticket.descripcion]
+  );
+  const passwordResetRequestData = useMemo(
+    () => parsePasswordResetRequestDescription(ticket.descripcion),
     [ticket.descripcion]
   );
   const [assignedUsername, setAssignedUsername] = useState(ticket.usuarioAsignado || "");
   const [nextStatus, setNextStatus] = useState(ticket.estado);
   const [comment, setComment] = useState("");
   const [actionError, setActionError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -1342,6 +1474,7 @@ function TicketDetail({
 
   async function handleAssign() {
     setActionError("");
+    setActionMessage("");
 
     try {
       await onAssign(ticket.id, assignedUsername);
@@ -1352,6 +1485,7 @@ function TicketDetail({
 
   async function handleStatusUpdate() {
     setActionError("");
+    setActionMessage("");
 
     try {
       await onChangeStatus(ticket.id, nextStatus);
@@ -1363,6 +1497,7 @@ function TicketDetail({
   async function handleCommentSubmit(event) {
     event.preventDefault();
     setActionError("");
+    setActionMessage("");
 
     try {
       await onAddComment(ticket.id, comment);
@@ -1375,6 +1510,7 @@ function TicketDetail({
   async function handleUpdateComment(event) {
     event.preventDefault();
     setActionError("");
+    setActionMessage("");
 
     try {
       await onUpdateComment(ticket.id, editingCommentId, editingContent);
@@ -1387,9 +1523,22 @@ function TicketDetail({
 
   async function handleDeleteComment(commentId) {
     setActionError("");
+    setActionMessage("");
 
     try {
       await onDeleteComment(ticket.id, commentId);
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  async function handleSendResetLink() {
+    setActionError("");
+    setActionMessage("");
+
+    try {
+      const data = await onSendResetLinkFromTicket(passwordResetRequestData);
+      setActionMessage(data.mensaje);
     } catch (requestError) {
       setActionError(requestError.message);
     }
@@ -1496,6 +1645,15 @@ function TicketDetail({
             Crear usuario desde ticket
           </button>
         ) : null}
+        {currentUserRole === "SUPER_ADMIN" && ticket.categoria === "Restablecimiento de password" ? (
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleSendResetLink}
+          >
+            Enviar enlace de reseteo
+          </button>
+        ) : null}
         <label>
           <span>Nuevo estado</span>
           <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
@@ -1520,6 +1678,7 @@ function TicketDetail({
         <button className="secondary-button" type="button" onClick={handleAssign}>
           Guardar asignacion
         </button>
+        {actionMessage ? <p className="form-success">{actionMessage}</p> : null}
         {actionError ? <p className="form-error">{actionError}</p> : null}
       </div>
     </article>
@@ -1553,7 +1712,8 @@ function TicketsPage({
   onAddComment,
   onUpdateComment,
   onDeleteComment,
-  onCreateUserFromTicket
+  onCreateUserFromTicket,
+  onSendResetLinkFromTicket
 }) {
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
   const catalogo = CATALOGOS_TICKETS[endpoint];
@@ -1690,6 +1850,7 @@ function TicketsPage({
             onUpdateComment={onUpdateComment}
             onDeleteComment={onDeleteComment}
             onCreateUserFromTicket={onCreateUserFromTicket}
+            onSendResetLinkFromTicket={onSendResetLinkFromTicket}
           />
         </section>
       ) : (
@@ -1931,9 +2092,11 @@ export default function App() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
+  const [resetPasswordMessage, setResetPasswordMessage] = useState("");
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
@@ -2158,6 +2321,24 @@ export default function App() {
     }
   }
 
+  async function handleResetPassword(request) {
+    setResetPasswordLoading(true);
+    setLoginError("");
+    setResetPasswordMessage("");
+
+    try {
+      const data = await apiRequest("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify(request)
+      });
+      setResetPasswordMessage(data.mensaje);
+    } catch (requestError) {
+      setLoginError(requestError.message);
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -2241,6 +2422,17 @@ export default function App() {
       body: JSON.stringify({ password })
     });
     await loadAdminData();
+  }
+
+  async function sendAdminPasswordResetLink(request) {
+    const data = await apiRequest("/admin/password-resets/link", {
+      method: "POST",
+      body: JSON.stringify(request)
+    });
+
+    await loadAdminData();
+    await loadPeticiones();
+    return data;
   }
 
   async function assignAdminRolePermission(roleId, permisoId) {
@@ -2361,6 +2553,17 @@ export default function App() {
   return (
     <Routes>
       <Route
+        path="/reset-password"
+        element={
+          <ResetPasswordPage
+            onResetPassword={handleResetPassword}
+            loading={resetPasswordLoading}
+            error={loginError}
+            successMessage={resetPasswordMessage}
+          />
+        }
+      />
+      <Route
         path="/login"
         element={
           <LoginPage
@@ -2443,6 +2646,7 @@ export default function App() {
                   roles: adminRoles,
                   groups: adminGroups
                 }}
+                onSendResetLinkFromTicket={sendAdminPasswordResetLink}
               />
             </AppLayout>
           </ProtectedRoute>
@@ -2475,6 +2679,7 @@ export default function App() {
                   roles: adminRoles,
                   groups: adminGroups
                 }}
+                onSendResetLinkFromTicket={sendAdminPasswordResetLink}
               />
             </AppLayout>
           </ProtectedRoute>

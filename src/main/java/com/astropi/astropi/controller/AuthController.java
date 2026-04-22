@@ -4,10 +4,12 @@ import com.astropi.astropi.controller.dto.auth.ForgotPasswordRequest;
 import com.astropi.astropi.controller.dto.auth.LoginRequest;
 import com.astropi.astropi.controller.dto.auth.LoginResponse;
 import com.astropi.astropi.controller.dto.auth.RegisterRequest;
+import com.astropi.astropi.controller.dto.auth.ResetPasswordRequest;
 import com.astropi.astropi.controller.dto.auth.UserResponse;
 import com.astropi.astropi.controller.dto.common.MensajeResponse;
 import com.astropi.astropi.security.JwtUtil;
 import com.astropi.astropi.service.PeticionService;
+import com.astropi.astropi.service.PasswordResetService;
 import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class AuthController {
 
     @Autowired
     private PeticionService peticionService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
 
     /**
@@ -74,8 +79,19 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public MensajeResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        peticionService.crearSolicitudRecuperacionPassword(request);
-        return new MensajeResponse("Solicitud de recuperacion enviada al grupo Administradores");
+        return new MensajeResponse(passwordResetService.solicitarRecuperacion(request));
+    }
+
+    @GetMapping("/reset-password/validate")
+    public MensajeResponse validateResetPasswordToken(@RequestParam String token) {
+        passwordResetService.validarToken(token);
+        return new MensajeResponse("Token valido");
+    }
+
+    @PostMapping("/reset-password")
+    public MensajeResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetearPassword(request.getToken(), request.getPassword());
+        return new MensajeResponse("Password actualizada correctamente");
     }
 
     @GetMapping("/me")

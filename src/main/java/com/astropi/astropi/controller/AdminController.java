@@ -11,10 +11,12 @@ import com.astropi.astropi.controller.dto.admin.PermisoRequest;
 import com.astropi.astropi.controller.dto.admin.PermisoResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.controller.dto.admin.UsuarioActivoRequest;
+import com.astropi.astropi.controller.dto.auth.ForgotPasswordRequest;
 import com.astropi.astropi.controller.dto.common.MensajeResponse;
 import com.astropi.astropi.controller.dto.grupo.GrupoRequest;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
 import com.astropi.astropi.service.GrupoService;
+import com.astropi.astropi.service.PasswordResetService;
 import com.astropi.astropi.service.PermisoService;
 import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -37,6 +39,9 @@ public class AdminController {
 
     @Autowired
     private PermisoService permisoService;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     @PostMapping("/grupos")
     public ResponseEntity<GrupoResponse> crearGrupo(@Valid @RequestBody GrupoRequest request) {
@@ -221,6 +226,13 @@ public class AdminController {
         );
 
         return ResponseEntity.ok(usuario);
+    }
+
+    @PostMapping("/password-resets/link")
+    public ResponseEntity<MensajeResponse> enviarEnlaceResetPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        String mensaje = passwordResetService.emitirEnlaceResetValidadoPorAdmin(request);
+        return ResponseEntity.ok(new MensajeResponse(mensaje));
     }
 
     @DeleteMapping("/usuarios/{id}")

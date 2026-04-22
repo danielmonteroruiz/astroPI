@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +65,7 @@ public class UsuarioService {
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         usuario.setActivo(true);
         usuario.setEmail(normalizarTextoOpcional(usuario.getEmail()));
+        usuario.setCredencialesActualizadasEn(LocalDateTime.now());
 
         //rol assign
         Rol rol = rolRepository.findByNombre("USER")
@@ -113,6 +115,7 @@ public class UsuarioService {
         usuario.setRol(rol);
         usuario.setGrupo(grupo);
         usuario.setActivo(activo);
+        usuario.setCredencialesActualizadasEn(LocalDateTime.now());
 
         return mapToAdminResponse(usuarioRepository.save(usuario));
     }
@@ -242,6 +245,7 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
         usuario.setPassword(passwordEncoder.encode(password));
+        usuario.setCredencialesActualizadasEn(LocalDateTime.now());
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
 
         return mapToAdminResponse(usuarioActualizado);

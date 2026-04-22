@@ -1,5 +1,7 @@
 package com.astropi.astropi.security;
 
+import com.astropi.astropi.model.Usuario;
+import com.astropi.astropi.repository.UsuarioRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,6 +31,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -63,8 +68,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
 
-                if (jwtUtil.validateToken(token, userDetails.getUsername())) {
+                if (jwtUtil.validateToken(token, userDetails.getUsername())
+                        && (usuario == null || !jwtUtil.fueEmitidoAntesDeCambioCredenciales(token, usuario.getCredencialesActualizadasEn()))) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
@@ -77,6 +84,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    SecurityContextHolder.clearContext();
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("""
+                            {
+                                "error": "No autorizado",
+                                "mensaje": "Token invalido o expirado"
+                            }
+                            """);
+                    return;
                 }
             } catch (AuthenticationException ex) {
                 SecurityContextHolder.clearContext();

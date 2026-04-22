@@ -1,6 +1,6 @@
 package com.astropi.astropi.controller.dto.auth;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -8,12 +8,16 @@ import jakarta.validation.constraints.Size;
  */
 public class ForgotPasswordRequest {
 
-    @NotBlank(message = "El username es obligatorio")
     @Size(max = 50, message = "El username no puede superar 50 caracteres")
     private String username;
 
     @Size(max = 150, message = "El email no puede superar 150 caracteres")
     private String email;
+
+    @AssertTrue(message = "Debes indicar username o email")
+    public boolean isTieneUsernameOEmail() {
+        return (username != null && !username.isBlank()) || (email != null && !email.isBlank());
+    }
 
     public String getUsername() {
         return username;
