@@ -78,6 +78,7 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    @Transactional
     public AdminUsuarioResponse crearUsuarioAdmin(String username,
                                                   String nombre,
                                                   String apellidos,

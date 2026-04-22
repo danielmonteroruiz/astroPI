@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 const TOKEN_KEY = "astropi_token";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const ESTADOS_TICKET = ["ABIERTA", "EN_PROCESO", "PARADA", "RESUELTA", "CERRADA"];
+const ESTADOS_GESTION = ["ABIERTA", "EN_PROCESO", "CERRADA"];
 const CATALOGOS_TICKETS = {
   incidencias: {
     Autenticacion: ["Error de login", "Recuperacion de acceso", "Bloqueo de cuenta"],
@@ -48,6 +49,106 @@ async function apiRequest(path, options = {}) {
   return payload;
 }
 
+function formatTicketDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Date(value).toLocaleString();
+}
+
+function getStatusColor(estado) {
+  if (estado === "ABIERTA") {
+    return "status-dot open";
+  }
+
+  if (estado === "EN_PROCESO") {
+    return "status-dot in-progress";
+  }
+
+  if (estado === "CERRADA") {
+    return "status-dot closed";
+  }
+
+  return "status-dot neutral";
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="icon-svg">
+      <path
+        d="M4 7h16M9 7V5h6v2m-9 0 1 12h10l1-12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="icon-svg">
+      <path
+        d="M4 20h4l10-10-4-4L4 16v4Zm9-13 4 4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PasswordIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="icon-svg">
+      <path
+        d="M7 8 3 12l4 4M17 8l4 4-4 4M14 5l-4 14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function parseUserRequestDescription(descripcion) {
+  const lines = (descripcion || "").split("\n");
+  const data = {
+    username: "",
+    nombre: "",
+    apellidos: "",
+    email: "",
+    dni: ""
+  };
+
+  lines.forEach((line) => {
+    const [label, ...rest] = line.split(":");
+    const value = rest.join(":").trim();
+    const normalizedLabel = (label || "").trim().toLowerCase();
+
+    if (normalizedLabel === "username") {
+      data.username = value;
+    } else if (normalizedLabel === "nombre") {
+      data.nombre = value;
+    } else if (normalizedLabel === "apellidos") {
+      data.apellidos = value;
+    } else if (normalizedLabel === "email") {
+      data.email = value;
+    } else if (normalizedLabel === "dni") {
+      data.dni = value;
+    }
+  });
+
+  return data;
+}
+
 function ProtectedRoute({ user, children }) {
   const location = useLocation();
 
@@ -70,7 +171,17 @@ function AdminRoute({ user, children }) {
   return children;
 }
 
-function LoginPage({ onLogin, onRegister, loading, registerLoading, error, registerMessage }) {
+function LoginPage({
+  onLogin,
+  onRegister,
+  onForgotPassword,
+  loading,
+  registerLoading,
+  forgotPasswordLoading,
+  error,
+  registerMessage,
+  forgotPasswordMessage
+}) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ username: "superadmin", password: "admin123" });
   const [registerForm, setRegisterForm] = useState({
@@ -80,6 +191,10 @@ function LoginPage({ onLogin, onRegister, loading, registerLoading, error, regis
     email: "",
     dni: "",
     password: ""
+  });
+  const [forgotPasswordForm, setForgotPasswordForm] = useState({
+    username: "",
+    email: ""
   });
 
   function updateField(field, value) {
@@ -98,6 +213,11 @@ function LoginPage({ onLogin, onRegister, loading, registerLoading, error, regis
   async function handleRegisterSubmit(event) {
     event.preventDefault();
     await onRegister(registerForm);
+  }
+
+  async function handleForgotPasswordSubmit(event) {
+    event.preventDefault();
+    await onForgotPassword(forgotPasswordForm);
   }
 
   return (
@@ -126,6 +246,13 @@ function LoginPage({ onLogin, onRegister, loading, registerLoading, error, regis
             >
               Solicitar alta
             </button>
+            <button
+              className={mode === "forgot" ? "nav-button active" : "nav-button"}
+              type="button"
+              onClick={() => setMode("forgot")}
+            >
+              He olvidado mi contrasena
+            </button>
           </div>
 
           {mode === "login" ? (
@@ -153,7 +280,7 @@ function LoginPage({ onLogin, onRegister, loading, registerLoading, error, regis
                 {loading ? "Entrando..." : "Entrar"}
               </button>
             </form>
-          ) : (
+          ) : mode === "register" ? (
             <form className="stack-form" onSubmit={handleRegisterSubmit}>
               <label>
                 <span>Username</span>
@@ -214,6 +341,35 @@ function LoginPage({ onLogin, onRegister, loading, registerLoading, error, regis
                 {registerLoading ? "Enviando..." : "Enviar solicitud"}
               </button>
             </form>
+          ) : (
+            <form className="stack-form" onSubmit={handleForgotPasswordSubmit}>
+              <label>
+                <span>Username</span>
+                <input
+                  type="text"
+                  value={forgotPasswordForm.username}
+                  onChange={(event) =>
+                    setForgotPasswordForm((current) => ({ ...current, username: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                <span>Email de contacto</span>
+                <input
+                  type="email"
+                  value={forgotPasswordForm.email}
+                  onChange={(event) =>
+                    setForgotPasswordForm((current) => ({ ...current, email: event.target.value }))
+                  }
+                />
+              </label>
+              {forgotPasswordMessage ? <p className="form-success">{forgotPasswordMessage}</p> : null}
+              {error ? <p className="form-error">{error}</p> : null}
+              <button className="primary-button" type="submit" disabled={forgotPasswordLoading}>
+                {forgotPasswordLoading ? "Enviando..." : "Solicitar recuperacion"}
+              </button>
+            </form>
           )}
         </div>
       </section>
@@ -268,13 +424,24 @@ function AdminPage({
   permisos,
   onRefresh,
   onCreateGroup,
+  onUpdateGroup,
   onDeleteGroup,
   onCreateUser,
-  onDeleteUser
+  onDeleteUser,
+  onUpdateUser,
+  onChangeUserPassword,
+  onAssignRolePermission,
+  onRemoveRolePermission
 }) {
   const [groupName, setGroupName] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editingUserForm, setEditingUserForm] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ userId: null, password: "" });
+  const [rolePermissionSelection, setRolePermissionSelection] = useState({});
   const [userForm, setUserForm] = useState({
     username: "",
     nombre: "",
@@ -347,6 +514,21 @@ function AdminPage({
     }
   }
 
+  async function handleUpdateGroup(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onUpdateGroup(editingGroupId, editingGroupName);
+      setEditingGroupId(null);
+      setEditingGroupName("");
+      setMessage("Grupo actualizado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
   async function handleDeleteUser(userId) {
     setMessage("");
     setError("");
@@ -359,6 +541,66 @@ function AdminPage({
     }
   }
 
+  async function handleUpdateUser(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onUpdateUser(editingUserId, editingUserForm);
+      setEditingUserId(null);
+      setEditingUserForm(null);
+      setMessage("Usuario actualizado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleChangePassword(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onChangeUserPassword(passwordForm.userId, passwordForm.password);
+      setPasswordForm({ userId: null, password: "" });
+      setMessage("Password actualizada correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleAssignRolePermission(roleId) {
+    const permisoId = rolePermissionSelection[roleId];
+
+    if (!permisoId) {
+      return;
+    }
+
+    setMessage("");
+    setError("");
+
+    try {
+      await onAssignRolePermission(roleId, Number(permisoId));
+      setRolePermissionSelection((current) => ({ ...current, [roleId]: "" }));
+      setMessage("Permiso asignado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleRemoveRolePermission(roleId, permisoId) {
+    setMessage("");
+    setError("");
+
+    try {
+      await onRemoveRolePermission(roleId, permisoId);
+      setMessage("Permiso quitado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
   return (
     <section className="admin-grid">
       <section className="list-panel">
@@ -366,22 +608,64 @@ function AdminPage({
           <p className="eyebrow">Administracion</p>
           <h2>Grupos y permisos</h2>
         </div>
-        <form className="stack-form" onSubmit={handleCreateGroup}>
-          <label>
+        <form className="admin-group-form" onSubmit={handleCreateGroup}>
+          <label className="admin-group-input">
             <span>Nuevo grupo</span>
             <input value={groupName} onChange={(event) => setGroupName(event.target.value)} required />
           </label>
-          <button className="primary-button" type="submit">Crear grupo</button>
+          <button className="primary-button compact-button" type="submit">Crear grupo</button>
         </form>
         <div className="ticket-list">
           {grupos.map((grupo) => (
-            <article className="ticket-row" key={`grupo-${grupo.id}`}>
-              <div className="ticket-main">
-                <strong>{grupo.nombre}</strong>
+            <article className="admin-row admin-row-compact" key={`grupo-${grupo.id}`}>
+              <div className="ticket-main admin-row-main">
+                {editingGroupId === grupo.id ? (
+                  <form className="admin-inline-form" onSubmit={handleUpdateGroup}>
+                    <input
+                      value={editingGroupName}
+                      onChange={(event) => setEditingGroupName(event.target.value)}
+                      required
+                    />
+                    <div className="comment-actions">
+                      <button className="secondary-button compact-button" type="submit">Guardar</button>
+                      <button
+                        className="secondary-button compact-button"
+                        type="button"
+                        onClick={() => {
+                          setEditingGroupId(null);
+                          setEditingGroupName("");
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <strong>{grupo.nombre}</strong>
+                    <p>Edicion de nombre disponible. Los permisos se gestionan por rol.</p>
+                  </>
+                )}
               </div>
-              <div className="ticket-meta">
-                <button className="secondary-button" type="button" onClick={() => handleDeleteGroup(grupo.id)}>
-                  Borrar grupo
+              <div className="admin-actions-row">
+                <button
+                  className="secondary-button icon-button"
+                  type="button"
+                  title="Editar grupo"
+                  onClick={() => {
+                    setEditingGroupId(grupo.id);
+                    setEditingGroupName(grupo.nombre);
+                  }}
+                >
+                  <EditIcon />
+                </button>
+                <button
+                  className="secondary-button icon-button"
+                  type="button"
+                  title="Borrar grupo"
+                  onClick={() => handleDeleteGroup(grupo.id)}
+                >
+                  <TrashIcon />
                 </button>
               </div>
             </article>
@@ -389,16 +673,66 @@ function AdminPage({
         </div>
         <div className="ticket-list">
           {roles.map((rol) => (
-            <article className="ticket-row" key={`rol-${rol.id}`}>
-              <div className="ticket-main">
+            <article className="admin-row" key={`rol-${rol.id}`}>
+              <div className="ticket-main admin-row-main">
                 <strong>{rol.nombre}</strong>
-                <p>Permisos: {rol.permisos?.length ? rol.permisos.join(", ") : "Sin permisos"}</p>
+                <div className="admin-permission-list">
+                  {rol.permisos?.length ? (
+                    rol.permisos.map((permisoNombre) => {
+                      const permiso = permisos.find((item) => item.nombre === permisoNombre);
+
+                      return (
+                        <span className="admin-permission-pill" key={`${rol.id}-${permisoNombre}`}>
+                          {permisoNombre}
+                          {permiso ? (
+                            <button
+                              className="icon-button small-icon-button"
+                              type="button"
+                              title="Quitar permiso"
+                              onClick={() => handleRemoveRolePermission(rol.id, permiso.id)}
+                            >
+                              <TrashIcon />
+                            </button>
+                          ) : null}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <p>Sin permisos asignados</p>
+                  )}
+                </div>
+                <div className="admin-role-permission-form">
+                  <label className="admin-group-input">
+                    <span>Añadir permiso</span>
+                    <select
+                      value={rolePermissionSelection[rol.id] || ""}
+                      onChange={(event) => setRolePermissionSelection((current) => ({
+                        ...current,
+                        [rol.id]: event.target.value
+                      }))}
+                    >
+                      <option value="">Selecciona un permiso</option>
+                      {permisos
+                        .filter((permiso) => !(rol.permisos || []).includes(permiso.nombre))
+                        .map((permiso) => (
+                          <option key={`${rol.id}-${permiso.id}`} value={permiso.id}>{permiso.nombre}</option>
+                        ))}
+                    </select>
+                  </label>
+                  <button
+                    className="secondary-button compact-button"
+                    type="button"
+                    onClick={() => handleAssignRolePermission(rol.id)}
+                  >
+                    Añadir
+                  </button>
+                </div>
               </div>
             </article>
           ))}
           {permisos.length ? (
-            <article className="ticket-row">
-              <div className="ticket-main">
+            <article className="admin-row">
+              <div className="ticket-main admin-row-main">
                 <strong>Permisos disponibles</strong>
                 <p>{permisos.map((permiso) => permiso.nombre).join(", ")}</p>
               </div>
@@ -407,38 +741,42 @@ function AdminPage({
         </div>
       </section>
 
-      <section className="list-panel">
+      <section className="list-panel admin-users-panel">
         <div className="section-heading">
           <p className="eyebrow">Administracion</p>
           <h2>Usuarios</h2>
         </div>
-        <form className="stack-form" onSubmit={handleCreateUser}>
-          <label><span>Username</span><input value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} required /></label>
-          <label><span>Nombre</span><input value={userForm.nombre} onChange={(event) => setUserForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
-          <label><span>Apellidos</span><input value={userForm.apellidos} onChange={(event) => setUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
-          <label><span>Email</span><input type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
-          <label><span>DNI</span><input value={userForm.dni} onChange={(event) => setUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
-          <label><span>Password</span><input type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} required /></label>
-          <label>
-            <span>Rol</span>
-            <select value={userForm.rolId} onChange={(event) => setUserForm((current) => ({ ...current, rolId: event.target.value }))} required>
-              {roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Grupo</span>
-            <select value={userForm.grupoId} onChange={(event) => setUserForm((current) => ({ ...current, grupoId: event.target.value }))} required>
-              {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Activo</span>
-            <select value={String(userForm.activo)} onChange={(event) => setUserForm((current) => ({ ...current, activo: event.target.value === "true" }))}>
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
-          </label>
-          <button className="primary-button" type="submit">Crear usuario</button>
+        <form className="stack-form admin-user-form" onSubmit={handleCreateUser}>
+          <div className="admin-form-grid">
+            <label><span>Username</span><input value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} required /></label>
+            <label><span>Nombre</span><input value={userForm.nombre} onChange={(event) => setUserForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
+            <label><span>Apellidos</span><input value={userForm.apellidos} onChange={(event) => setUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
+            <label><span>Email</span><input type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
+            <label><span>DNI</span><input value={userForm.dni} onChange={(event) => setUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
+            <label><span>Password</span><input type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} required /></label>
+          </div>
+          <div className="admin-select-row">
+            <label>
+              <span>Rol</span>
+              <select value={userForm.rolId} onChange={(event) => setUserForm((current) => ({ ...current, rolId: event.target.value }))} required>
+                {roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Grupo</span>
+              <select value={userForm.grupoId} onChange={(event) => setUserForm((current) => ({ ...current, grupoId: event.target.value }))} required>
+                {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>Activo</span>
+              <select value={String(userForm.activo)} onChange={(event) => setUserForm((current) => ({ ...current, activo: event.target.value === "true" }))}>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </label>
+          </div>
+          <button className="primary-button admin-create-button" type="submit">Crear</button>
         </form>
 
         {message ? <p className="form-success">{message}</p> : null}
@@ -448,15 +786,86 @@ function AdminPage({
           {usuarios.map((usuario) => (
             <article className="ticket-row" key={`usuario-${usuario.id}`}>
               <div className="ticket-main">
-                <strong>{usuario.username}</strong>
-                <p>{usuario.nombre} {usuario.apellidos}</p>
-                <p>{usuario.rol} | {usuario.grupo}</p>
-                <p>Permisos: {usuario.permisos?.length ? usuario.permisos.join(", ") : "Sin permisos"}</p>
+                {editingUserId === usuario.id ? (
+                  <form className="stack-form" onSubmit={handleUpdateUser}>
+                    <label><span>Username</span><input value={editingUserForm.username} onChange={(event) => setEditingUserForm((current) => ({ ...current, username: event.target.value }))} required /></label>
+                    <label><span>Nombre</span><input value={editingUserForm.nombre} onChange={(event) => setEditingUserForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
+                    <label><span>Apellidos</span><input value={editingUserForm.apellidos} onChange={(event) => setEditingUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
+                    <label><span>Email</span><input type="email" value={editingUserForm.email || ""} onChange={(event) => setEditingUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
+                    <label><span>DNI</span><input value={editingUserForm.dni} onChange={(event) => setEditingUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
+                    <div className="comment-actions">
+                      <button className="secondary-button" type="submit">Guardar</button>
+                      <button className="secondary-button" type="button" onClick={() => { setEditingUserId(null); setEditingUserForm(null); }}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <strong>{usuario.username}</strong>
+                    <p>{usuario.nombre} {usuario.apellidos}</p>
+                    <p>{usuario.rol} | {usuario.grupo}</p>
+                    <p>Permisos: {usuario.permisos?.length ? usuario.permisos.join(", ") : "Sin permisos"}</p>
+                  </>
+                )}
               </div>
-              <div className="ticket-meta">
-                <button className="secondary-button" type="button" onClick={() => handleDeleteUser(usuario.id)}>
-                  Borrar usuario
-                </button>
+              <div className="admin-user-side">
+                <div className="admin-actions-row admin-actions-row-right">
+                  <button
+                    className="secondary-button icon-button"
+                    type="button"
+                    title="Editar usuario"
+                    onClick={() => {
+                      setEditingUserId(usuario.id);
+                      setEditingUserForm({
+                        username: usuario.username,
+                        nombre: usuario.nombre,
+                        apellidos: usuario.apellidos,
+                        email: usuario.email || "",
+                        dni: usuario.dni
+                      });
+                    }}
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    className="secondary-button icon-button"
+                    type="button"
+                    title="Cambiar password"
+                    onClick={() => setPasswordForm({ userId: usuario.id, password: "" })}
+                  >
+                    <PasswordIcon />
+                  </button>
+                  <button
+                    className="secondary-button icon-button"
+                    type="button"
+                    title="Borrar usuario"
+                    onClick={() => handleDeleteUser(usuario.id)}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+                {passwordForm.userId === usuario.id ? (
+                  <form className="stack-form admin-password-form" onSubmit={handleChangePassword}>
+                    <input
+                      type="password"
+                      value={passwordForm.password}
+                      onChange={(event) => setPasswordForm({ userId: usuario.id, password: event.target.value })}
+                      placeholder="Nueva password"
+                      required
+                    />
+                    <div className="comment-actions">
+                      <button className="secondary-button compact-button" type="submit">Guardar</button>
+                      <button
+                        className="secondary-button compact-button"
+                        type="button"
+                        onClick={() => setPasswordForm({ userId: null, password: "" })}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : null}
               </div>
             </article>
           ))}
@@ -464,6 +873,154 @@ function AdminPage({
         <button className="secondary-button" type="button" onClick={onRefresh}>Recargar admin</button>
       </section>
     </section>
+  );
+}
+
+function CreateUserFromTicketModal({
+  isOpen,
+  initialData,
+  roles,
+  groups,
+  onClose,
+  onCreateUser
+}) {
+  const modalRef = useRef(null);
+  const [position, setPosition] = useState({ x: 120, y: 120 });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    username: "",
+    nombre: "",
+    apellidos: "",
+    email: "",
+    dni: "",
+    password: "",
+    rolId: "",
+    grupoId: "",
+    activo: true
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setForm({
+      username: initialData?.username || "",
+      nombre: initialData?.nombre || "",
+      apellidos: initialData?.apellidos || "",
+      email: initialData?.email || "",
+      dni: initialData?.dni || "",
+      password: "",
+      rolId: roles.find((rol) => rol.nombre === "USER")?.id || roles[0]?.id || "",
+      grupoId: groups.find((grupo) => grupo.nombre === "Administradores")?.id || groups[0]?.id || "",
+      activo: true
+    });
+    setMessage("");
+    setError("");
+    setPosition({ x: 120, y: 120 });
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onCreateUser({
+        ...form,
+        rolId: Number(form.rolId),
+        grupoId: Number(form.grupoId)
+      });
+      setMessage("Usuario creado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  function startDragging(event) {
+    event.preventDefault();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialX = position.x;
+    const initialY = position.y;
+
+    function handleMouseMove(moveEvent) {
+      const nextPosition = {
+        x: initialX + (moveEvent.clientX - startX),
+        y: initialY + (moveEvent.clientY - startY)
+      };
+
+      setPosition(nextPosition);
+
+      if (modalRef.current) {
+        modalRef.current.style.left = `${nextPosition.x}px`;
+        modalRef.current.style.top = `${nextPosition.y}px`;
+      }
+    }
+
+    function handleMouseUp() {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }
+
+  return (
+    <div className="modal-overlay">
+      <section
+        ref={modalRef}
+        className="draggable-modal"
+        style={{ left: `${position.x}px`, top: `${position.y}px` }}
+      >
+        <header className="modal-header">
+          <div
+            className="modal-drag-handle"
+            onMouseDown={startDragging}
+          >
+            <strong>Crear usuario desde ticket</strong>
+          </div>
+          <button className="secondary-button" type="button" onClick={onClose}>
+            Cerrar
+          </button>
+        </header>
+
+        <form className="stack-form" onSubmit={handleSubmit}>
+          <label><span>Username</span><input value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} required /></label>
+          <label><span>Nombre</span><input value={form.nombre} onChange={(event) => setForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
+          <label><span>Apellidos</span><input value={form.apellidos} onChange={(event) => setForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
+          <label><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} /></label>
+          <label><span>DNI</span><input value={form.dni} onChange={(event) => setForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
+          <label><span>Password inicial</span><input type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required /></label>
+          <label>
+            <span>Rol</span>
+            <select value={form.rolId} onChange={(event) => setForm((current) => ({ ...current, rolId: event.target.value }))} required>
+              {roles.map((rol) => (
+                <option key={rol.id} value={rol.id}>{rol.nombre}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Grupo</span>
+            <select value={form.grupoId} onChange={(event) => setForm((current) => ({ ...current, grupoId: event.target.value }))} required>
+              {groups.map((grupo) => (
+                <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>
+              ))}
+            </select>
+          </label>
+          {message ? <p className="form-success">{message}</p> : null}
+          {error ? <p className="form-error">{error}</p> : null}
+          <button className="primary-button" type="submit">Crear usuario</button>
+        </form>
+      </section>
+    </div>
   );
 }
 
@@ -501,31 +1058,53 @@ function Dashboard({ incidencias, peticiones }) {
   );
 }
 
-function TicketCard({
+function TicketDetail({
   ticket,
   currentUsername,
+  currentUserRole,
   assignables,
   onAssign,
   onChangeStatus,
   onAddComment,
   onUpdateComment,
-  onDeleteComment
+  onDeleteComment,
+  onCreateUserFromTicket
 }) {
+  const userRequestData = useMemo(
+    () => parseUserRequestDescription(ticket.descripcion),
+    [ticket.descripcion]
+  );
   const [assignedUsername, setAssignedUsername] = useState(ticket.usuarioAsignado || "");
+  const [nextStatus, setNextStatus] = useState(ticket.estado);
   const [comment, setComment] = useState("");
   const [actionError, setActionError] = useState("");
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
   useEffect(() => {
     setAssignedUsername(ticket.usuarioAsignado || "");
   }, [ticket.usuarioAsignado]);
+
+  useEffect(() => {
+    setNextStatus(ticket.estado);
+  }, [ticket.estado]);
 
   async function handleAssign() {
     setActionError("");
 
     try {
       await onAssign(ticket.id, assignedUsername);
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  async function handleStatusUpdate() {
+    setActionError("");
+
+    try {
+      await onChangeStatus(ticket.id, nextStatus);
     } catch (requestError) {
       setActionError(requestError.message);
     }
@@ -567,7 +1146,8 @@ function TicketCard({
   }
 
   return (
-    <article className="ticket-row">
+    <>
+    <article className="ticket-detail ticket-detail-full">
       <div className="ticket-main">
         <strong>{ticket.codigoTicket}</strong>
         <h3>{ticket.titulo}</h3>
@@ -658,8 +1238,30 @@ function TicketCard({
       </div>
 
       <div className="ticket-meta">
+        <span>Estado: {ticket.estado}</span>
+        <span>Grupo: {ticket.grupo}</span>
+        <span>Servicio: {ticket.servicio}</span>
+        <span>Categoria: {ticket.categoria}</span>
         <span>Creador: {ticket.usuario || "-"}</span>
         <span>Asignado: {ticket.usuarioAsignado || "Sin asignar"}</span>
+        {currentUserRole === "SUPER_ADMIN" && ticket.categoria === "Alta de usuario" ? (
+          <button className="secondary-button" type="button" onClick={() => setShowCreateUserModal(true)}>
+            Crear usuario desde ticket
+          </button>
+        ) : null}
+        <label>
+          <span>Nuevo estado</span>
+          <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
+            {ESTADOS_GESTION.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="secondary-button" type="button" onClick={handleStatusUpdate}>
+          Confirmar cambio
+        </button>
         <select value={assignedUsername} onChange={(event) => setAssignedUsername(event.target.value)}>
           <option value="">Sin asignar</option>
           {assignables.map((assignable) => (
@@ -671,27 +1273,21 @@ function TicketCard({
         <button className="secondary-button" type="button" onClick={handleAssign}>
           Guardar asignacion
         </button>
-        {ticket.estado !== "CERRADA" ? (
-          <>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => onChangeStatus(ticket.id, "RESUELTA")}
-            >
-              Marcar RESUELTA
-            </button>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => onChangeStatus(ticket.id, "CERRADA")}
-            >
-              Marcar CERRADA
-            </button>
-          </>
-        ) : null}
         {actionError ? <p className="form-error">{actionError}</p> : null}
       </div>
     </article>
+    <CreateUserFromTicketModal
+      isOpen={showCreateUserModal}
+      initialData={userRequestData}
+      roles={onCreateUserFromTicket.roles}
+      groups={onCreateUserFromTicket.groups}
+      onClose={() => setShowCreateUserModal(false)}
+      onCreateUser={async (payload) => {
+        await onCreateUserFromTicket.create(payload);
+        setShowCreateUserModal(false);
+      }}
+    />
+    </>
   );
 }
 
@@ -699,6 +1295,7 @@ function TicketsPage({
   title,
   endpoint,
   currentUsername,
+  currentUserRole,
   groups,
   tickets,
   assignables,
@@ -707,7 +1304,8 @@ function TicketsPage({
   onAssign,
   onAddComment,
   onUpdateComment,
-  onDeleteComment
+  onDeleteComment,
+  onCreateUserFromTicket
 }) {
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
   const catalogo = CATALOGOS_TICKETS[endpoint];
@@ -725,9 +1323,18 @@ function TicketsPage({
   );
 
   const [form, setForm] = useState(initialForm);
-  const [filters, setFilters] = useState({ estado: "ABIERTA" });
+  const [filters, setFilters] = useState({
+    estado: "ABIERTA",
+    grupoId: "",
+    fechaDesde: "",
+    fechaHasta: ""
+  });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+
+  const selectedTicket =
+    tickets.find((ticket) => ticket.id === selectedTicketId) || null;
 
   useEffect(() => {
     setForm((current) => ({
@@ -739,6 +1346,12 @@ function TicketsPage({
   useEffect(() => {
     setForm(initialForm);
   }, [initialForm]);
+
+  useEffect(() => {
+    if (!tickets.length) {
+      setSelectedTicketId(null);
+    }
+  }, [selectedTicketId, tickets]);
 
   function updateField(field, value) {
     setForm((current) => {
@@ -780,150 +1393,203 @@ function TicketsPage({
     }
   }
 
-  async function handleFilterChange(estado) {
-    const nextFilters = { ...filters, estado };
-    setFilters(nextFilters);
-    await onRefresh(nextFilters);
-  }
-
-  async function handleGroupFilterChange(grupoId) {
-    const nextFilters = { ...filters, grupoId };
+  async function handleFilterChange(field, value) {
+    const nextFilters = { ...filters, [field]: value };
     setFilters(nextFilters);
     await onRefresh(nextFilters);
   }
 
   return (
     <section className="content-grid">
-      <form className="editor-panel" onSubmit={handleCreate}>
-        <div className="section-heading">
-          <p className="eyebrow">{title}</p>
-          <h2>Crear {singularTitle}</h2>
-        </div>
-        <label>
-          <span>Titulo</span>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(event) => updateField("titulo", event.target.value)}
-            required
-          />
-        </label>
-        <label>
-          <span>Descripcion</span>
-          <textarea
-            value={form.descripcion}
-            onChange={(event) => updateField("descripcion", event.target.value)}
-            required
-          />
-        </label>
-        <div className="field-row">
-          <label>
-            <span>Servicio</span>
-            <select
-              value={form.servicio}
-              onChange={(event) => updateField("servicio", event.target.value)}
-              required
-            >
-              {servicios.map((servicio) => (
-                <option key={servicio} value={servicio}>
-                  {servicio}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Categoria</span>
-            <select
-              value={form.categoria}
-              onChange={(event) => updateField("categoria", event.target.value)}
-              required
-            >
-              {(catalogo[form.servicio] || []).map((categoria) => (
-                <option key={categoria} value={categoria}>
-                  {categoria}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <label>
-          <span>Grupo</span>
-          <select
-            value={form.grupoId}
-            onChange={(event) => updateField("grupoId", event.target.value)}
-            required
-          >
-            <option value="" disabled>
-              Selecciona un grupo
-            </option>
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.nombre}
-              </option>
-            ))}
-          </select>
-        </label>
-        {message ? <p className="form-success">{message}</p> : null}
-        {error ? <p className="form-error">{error}</p> : null}
-        <button className="primary-button" type="submit">
-          Guardar
-        </button>
-      </form>
-
-      <section className="list-panel">
-        <div className="section-heading section-heading-inline">
-          <div>
-            <p className="eyebrow">Listado</p>
-            <h2>{title}</h2>
-          </div>
-          <div className="filter-strip">
-            <select
-              value={filters.estado}
-              onChange={(event) => handleFilterChange(event.target.value)}
-            >
-              {ESTADOS_TICKET.map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
-            <select
-              value={filters.grupoId || ""}
-              onChange={(event) => handleGroupFilterChange(event.target.value)}
-            >
-              <option value="">Todos los grupos</option>
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.nombre}
-                </option>
-              ))}
-            </select>
-            <button className="secondary-button" type="button" onClick={() => onRefresh(filters)}>
-              Recargar
+      {selectedTicket ? (
+        <section className="list-panel ticket-detail-screen">
+          <div className="section-heading section-heading-inline">
+            <div>
+              <p className="eyebrow">Detalle</p>
+              <h2>{selectedTicket.codigoTicket}</h2>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => setSelectedTicketId(null)}>
+              Volver al listado
             </button>
           </div>
-        </div>
 
-        <div className="ticket-list">
-          {tickets.length === 0 ? (
-            <p className="empty-state">No hay resultados para este filtro.</p>
-          ) : (
-            tickets.map((ticket) => (
-              <TicketCard
-                key={`${endpoint}-${ticket.id}`}
-                ticket={ticket}
-                currentUsername={currentUsername}
-                assignables={assignables}
-                onAssign={onAssign}
-                onChangeStatus={onChangeStatus}
-                onAddComment={onAddComment}
-                onUpdateComment={onUpdateComment}
-                onDeleteComment={onDeleteComment}
+          <TicketDetail
+            ticket={selectedTicket}
+            currentUsername={currentUsername}
+            currentUserRole={currentUserRole}
+            assignables={assignables}
+            onAssign={onAssign}
+            onChangeStatus={onChangeStatus}
+            onAddComment={onAddComment}
+            onUpdateComment={onUpdateComment}
+            onDeleteComment={onDeleteComment}
+            onCreateUserFromTicket={onCreateUserFromTicket}
+          />
+        </section>
+      ) : (
+        <>
+          <form className="editor-panel" onSubmit={handleCreate}>
+            <div className="section-heading">
+              <p className="eyebrow">{title}</p>
+              <h2>Crear {singularTitle}</h2>
+            </div>
+            <label>
+              <span>Titulo</span>
+              <input
+                type="text"
+                value={form.titulo}
+                onChange={(event) => updateField("titulo", event.target.value)}
+                required
               />
-            ))
-          )}
-        </div>
-      </section>
+            </label>
+            <label>
+              <span>Descripcion</span>
+              <textarea
+                value={form.descripcion}
+                onChange={(event) => updateField("descripcion", event.target.value)}
+                required
+              />
+            </label>
+            <div className="field-row">
+              <label>
+                <span>Servicio</span>
+                <select
+                  value={form.servicio}
+                  onChange={(event) => updateField("servicio", event.target.value)}
+                  required
+                >
+                  {servicios.map((servicio) => (
+                    <option key={servicio} value={servicio}>
+                      {servicio}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Categoria</span>
+                <select
+                  value={form.categoria}
+                  onChange={(event) => updateField("categoria", event.target.value)}
+                  required
+                >
+                  {(catalogo[form.servicio] || []).map((categoria) => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>Grupo</span>
+              <select
+                value={form.grupoId}
+                onChange={(event) => updateField("grupoId", event.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Selecciona un grupo
+                </option>
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.nombre}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {message ? <p className="form-success">{message}</p> : null}
+            {error ? <p className="form-error">{error}</p> : null}
+            <button className="primary-button" type="submit">
+              Guardar
+            </button>
+          </form>
+
+          <section className="list-panel ticket-list-screen">
+            <div className="section-heading section-heading-inline">
+              <div>
+                <p className="eyebrow">Listado</p>
+                <h2>{title}</h2>
+              </div>
+              <div className="filter-strip">
+                <label className="filter-field">
+                  <span>Estado</span>
+                  <select
+                    value={filters.estado}
+                    onChange={(event) => handleFilterChange("estado", event.target.value)}
+                  >
+                    {ESTADOS_TICKET.map((estado) => (
+                      <option key={estado} value={estado}>
+                        {estado}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="filter-field">
+                  <span>Grupo</span>
+                  <select
+                    value={filters.grupoId || ""}
+                    onChange={(event) => handleFilterChange("grupoId", event.target.value)}
+                  >
+                    <option value="">Todos los grupos</option>
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="filter-field">
+                  <span>Desde</span>
+                  <input
+                    type="date"
+                    value={filters.fechaDesde}
+                    onChange={(event) => handleFilterChange("fechaDesde", event.target.value)}
+                  />
+                </label>
+                <label className="filter-field">
+                  <span>Hasta</span>
+                  <input
+                    type="date"
+                    value={filters.fechaHasta}
+                    onChange={(event) => handleFilterChange("fechaHasta", event.target.value)}
+                  />
+                </label>
+                <button className="secondary-button" type="button" onClick={() => onRefresh(filters)}>
+                  Recargar
+                </button>
+              </div>
+            </div>
+
+            <div className="ticket-summary-list">
+              {tickets.length === 0 ? (
+                <p className="empty-state">No hay resultados para este filtro.</p>
+              ) : (
+                tickets.map((ticket) => (
+                  <button
+                    key={`${endpoint}-${ticket.id}`}
+                    className="ticket-summary"
+                    type="button"
+                    onClick={() => setSelectedTicketId(ticket.id)}
+                  >
+                    <span className={getStatusColor(ticket.estado)}></span>
+                    <span>{ticket.codigoTicket}</span>
+                    <span>|</span>
+                    <span><strong>Asunto:</strong> {ticket.titulo}</span>
+                    <span>|</span>
+                    <span><strong>Estado:</strong> {ticket.estado}</span>
+                    <span>|</span>
+                    <span><strong>Creado por:</strong> {ticket.usuario || "-"}</span>
+                    <span>|</span>
+                    <span><strong>Grupo:</strong> {ticket.grupo || "-"}</span>
+                    <span>|</span>
+                    <span><strong>Fecha:</strong> {formatTicketDate(ticket.fechaCreacion)}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          </section>
+        </>
+      )}
     </section>
   );
 }
@@ -933,8 +1599,10 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
@@ -965,6 +1633,12 @@ export default function App() {
     if (filters.grupoId) {
       params.set("grupoId", filters.grupoId);
     }
+    if (filters.fechaDesde) {
+      params.set("fechaDesde", filters.fechaDesde);
+    }
+    if (filters.fechaHasta) {
+      params.set("fechaHasta", filters.fechaHasta);
+    }
 
     const data = await apiRequest(`/incidencias?${params.toString()}`);
     setIncidencias(data.content || []);
@@ -983,6 +1657,12 @@ export default function App() {
     }
     if (filters.grupoId) {
       params.set("grupoId", filters.grupoId);
+    }
+    if (filters.fechaDesde) {
+      params.set("fechaDesde", filters.fechaDesde);
+    }
+    if (filters.fechaHasta) {
+      params.set("fechaHasta", filters.fechaHasta);
     }
 
     const data = await apiRequest(`/peticiones?${params.toString()}`);
@@ -1081,6 +1761,7 @@ export default function App() {
     setRegisterLoading(true);
     setLoginError("");
     setRegisterMessage("");
+    setForgotPasswordMessage("");
 
     try {
       const data = await apiRequest("/auth/register", {
@@ -1092,6 +1773,25 @@ export default function App() {
       setLoginError(requestError.message);
     } finally {
       setRegisterLoading(false);
+    }
+  }
+
+  async function handleForgotPassword(request) {
+    setForgotPasswordLoading(true);
+    setLoginError("");
+    setRegisterMessage("");
+    setForgotPasswordMessage("");
+
+    try {
+      const data = await apiRequest("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify(request)
+      });
+      setForgotPasswordMessage(data.mensaje);
+    } catch (requestError) {
+      setLoginError(requestError.message);
+    } finally {
+      setForgotPasswordLoading(false);
     }
   }
 
@@ -1118,6 +1818,14 @@ export default function App() {
     await Promise.all([loadGroups(), loadAdminData()]);
   }
 
+  async function updateAdminGroup(groupId, nombre) {
+    await apiRequest(`/admin/grupos/${groupId}`, {
+      method: "PUT",
+      body: JSON.stringify({ nombre })
+    });
+    await Promise.all([loadGroups(), loadAdminData()]);
+  }
+
   async function deleteAdminGroup(groupId) {
     await apiRequest(`/admin/grupos/${groupId}`, { method: "DELETE" });
     await Promise.all([loadGroups(), loadAdminData()]);
@@ -1133,6 +1841,37 @@ export default function App() {
 
   async function deleteAdminUser(userId) {
     await apiRequest(`/admin/usuarios/${userId}`, { method: "DELETE" });
+    await loadAdminData();
+  }
+
+  async function updateAdminUser(userId, payload) {
+    await apiRequest(`/admin/usuarios/${userId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    });
+    await loadAdminData();
+  }
+
+  async function changeAdminUserPassword(userId, password) {
+    await apiRequest(`/admin/usuarios/${userId}/password`, {
+      method: "PUT",
+      body: JSON.stringify({ password })
+    });
+    await loadAdminData();
+  }
+
+  async function assignAdminRolePermission(roleId, permisoId) {
+    await apiRequest(`/admin/roles/${roleId}/permisos`, {
+      method: "PUT",
+      body: JSON.stringify({ permisoId })
+    });
+    await loadAdminData();
+  }
+
+  async function removeAdminRolePermission(roleId, permisoId) {
+    await apiRequest(`/admin/roles/${roleId}/permisos/${permisoId}`, {
+      method: "DELETE"
+    });
     await loadAdminData();
   }
 
@@ -1221,10 +1960,13 @@ export default function App() {
           <LoginPage
             onLogin={handleLogin}
             onRegister={handleRegister}
+            onForgotPassword={handleForgotPassword}
             loading={loginLoading}
             registerLoading={registerLoading}
+            forgotPasswordLoading={forgotPasswordLoading}
             error={loginError}
             registerMessage={registerMessage}
+            forgotPasswordMessage={forgotPasswordMessage}
           />
         }
       />
@@ -1250,9 +1992,14 @@ export default function App() {
                 permisos={adminPermisos}
                 onRefresh={loadAdminData}
                 onCreateGroup={createAdminGroup}
+                onUpdateGroup={updateAdminGroup}
                 onDeleteGroup={deleteAdminGroup}
                 onCreateUser={createAdminUser}
                 onDeleteUser={deleteAdminUser}
+                onUpdateUser={updateAdminUser}
+                onChangeUserPassword={changeAdminUserPassword}
+                onAssignRolePermission={assignAdminRolePermission}
+                onRemoveRolePermission={removeAdminRolePermission}
               />
             </AppLayout>
           </AdminRoute>
@@ -1267,6 +2014,7 @@ export default function App() {
                 title="Incidencias"
                 endpoint="incidencias"
                 currentUsername={user?.username || ""}
+                currentUserRole={user?.rol || ""}
                 groups={groups}
                 tickets={incidencias}
                 assignables={incidenciaAssignables}
@@ -1278,6 +2026,11 @@ export default function App() {
                   updateTicketComment("incidencias", id, commentId, contenido)
                 }
                 onDeleteComment={(id, commentId) => deleteTicketComment("incidencias", id, commentId)}
+                onCreateUserFromTicket={{
+                  create: createAdminUser,
+                  roles: adminRoles,
+                  groups: adminGroups
+                }}
               />
             </AppLayout>
           </ProtectedRoute>
@@ -1292,6 +2045,7 @@ export default function App() {
                 title="Peticiones"
                 endpoint="peticiones"
                 currentUsername={user?.username || ""}
+                currentUserRole={user?.rol || ""}
                 groups={groups}
                 tickets={peticiones}
                 assignables={peticionAssignables}
@@ -1303,6 +2057,11 @@ export default function App() {
                   updateTicketComment("peticiones", id, commentId, contenido)
                 }
                 onDeleteComment={(id, commentId) => deleteTicketComment("peticiones", id, commentId)}
+                onCreateUserFromTicket={{
+                  create: createAdminUser,
+                  roles: adminRoles,
+                  groups: adminGroups
+                }}
               />
             </AppLayout>
           </ProtectedRoute>

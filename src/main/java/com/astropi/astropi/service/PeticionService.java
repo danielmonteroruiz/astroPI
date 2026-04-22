@@ -3,6 +3,7 @@ package com.astropi.astropi.service;
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
+import com.astropi.astropi.controller.dto.auth.ForgotPasswordRequest;
 import com.astropi.astropi.controller.dto.auth.RegisterRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
 import com.astropi.astropi.model.ComentarioPeticion;
@@ -77,6 +78,23 @@ public class PeticionService {
         peticion.setDescripcion(construirDescripcionSolicitudAlta(request));
         peticion.setServicio("Cuentas");
         peticion.setCategoria("Alta de usuario");
+        peticion.setEstado(EstadoPeticion.ABIERTA);
+        peticion.setGrupo(grupo);
+        peticion.setCodigoTicket(generarCodigoTicket());
+        peticion.setFechaCreacion(LocalDateTime.now());
+
+        return mapToResponse(peticionRepository.save(peticion));
+    }
+
+    public PeticionResponse crearSolicitudRecuperacionPassword(ForgotPasswordRequest request) {
+        Grupo grupo = grupoRepository.findByNombre("Administradores")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo Administradores no encontrado"));
+
+        Peticion peticion = new Peticion();
+        peticion.setTitulo("Solicitud de recuperacion de password: " + request.getUsername());
+        peticion.setDescripcion(construirDescripcionRecuperacionPassword(request));
+        peticion.setServicio("Cuentas");
+        peticion.setCategoria("Restablecimiento de password");
         peticion.setEstado(EstadoPeticion.ABIERTA);
         peticion.setGrupo(grupo);
         peticion.setCodigoTicket(generarCodigoTicket());
@@ -278,6 +296,12 @@ public class PeticionService {
                 + "Apellidos: " + request.getApellidos() + "\n"
                 + "Email: " + (request.getEmail() == null ? "" : request.getEmail()) + "\n"
                 + "DNI: " + request.getDni();
+    }
+
+    private String construirDescripcionRecuperacionPassword(ForgotPasswordRequest request) {
+        return "Solicitud de recuperacion de password enviada desde el login.\n"
+                + "Username: " + request.getUsername() + "\n"
+                + "Email de contacto: " + (request.getEmail() == null ? "" : request.getEmail());
     }
 
     private String generarCodigoTicket() {

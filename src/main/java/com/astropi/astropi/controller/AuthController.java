@@ -1,5 +1,6 @@
 package com.astropi.astropi.controller;
 
+import com.astropi.astropi.controller.dto.auth.ForgotPasswordRequest;
 import com.astropi.astropi.controller.dto.auth.LoginRequest;
 import com.astropi.astropi.controller.dto.auth.LoginResponse;
 import com.astropi.astropi.controller.dto.auth.RegisterRequest;
@@ -69,6 +70,12 @@ public class AuthController {
     public MensajeResponse register(@Valid @RequestBody RegisterRequest request) {
         peticionService.crearSolicitudAltaUsuario(request);
         return new MensajeResponse("Solicitud de alta enviada al grupo Administradores");
+    }
+
+    @PostMapping("/forgot-password")
+    public MensajeResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        peticionService.crearSolicitudRecuperacionPassword(request);
+        return new MensajeResponse("Solicitud de recuperacion enviada al grupo Administradores");
     }
 
     @GetMapping("/me")
