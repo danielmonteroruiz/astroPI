@@ -294,13 +294,15 @@ public class IncidenciaService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
+            if (!esSuperAdmin(usuario)) {
+                Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
 
-            if (usuario.getGrupo() != null) {
-                Predicate mismoGrupo = criteriaBuilder.equal(root.get("grupo").get("id"), usuario.getGrupo().getId());
-                predicates.add(criteriaBuilder.or(esCreador, mismoGrupo));
-            } else {
-                predicates.add(esCreador);
+                if (usuario.getGrupo() != null) {
+                    Predicate mismoGrupo = criteriaBuilder.equal(root.get("grupo").get("id"), usuario.getGrupo().getId());
+                    predicates.add(criteriaBuilder.or(esCreador, mismoGrupo));
+                } else {
+                    predicates.add(esCreador);
+                }
             }
 
             if (estado != null) {
@@ -358,6 +360,10 @@ public class IncidenciaService {
     }
 
     private boolean puedeGestionarIncidencia(Usuario usuario, Incidencia incidencia) {
+        if (esSuperAdmin(usuario)) {
+            return true;
+        }
+
         boolean esCreador = incidencia.getUsuario() != null
                 && incidencia.getUsuario().getUsername().equals(usuario.getUsername());
 
@@ -377,6 +383,10 @@ public class IncidenciaService {
                 || !incidencia.getGrupo().getId().equals(usuarioAsignado.getGrupo().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario asignado debe pertenecer al mismo grupo");
         }
+    }
+
+    private boolean esSuperAdmin(Usuario usuario) {
+        return usuario.getRol() != null && "SUPER_ADMIN".equals(usuario.getRol().getNombre());
     }
 
     private void validarCambioEstado(EstadoIncidencia estadoActual, EstadoIncidencia nuevoEstado) {

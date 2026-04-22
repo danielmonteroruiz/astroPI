@@ -1,6 +1,7 @@
 package com.astropi.astropi.service;
 
 import com.astropi.astropi.controller.dto.admin.AdminUsuarioResponse;
+import com.astropi.astropi.controller.dto.auth.UserResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
 import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Permiso;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
@@ -76,6 +78,70 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
+    public AdminUsuarioResponse crearUsuarioAdmin(String username,
+                                                  String nombre,
+                                                  String apellidos,
+                                                  String email,
+                                                  String dni,
+                                                  String password,
+                                                  Long rolId,
+                                                  Long grupoId,
+                                                  Boolean activo) {
+
+        validarUsernameDisponible(username, null);
+        validarEmailDisponible(email, null);
+        validarDniDisponible(dni, null);
+
+        Rol rol = rolRepository.findById(rolId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rol no encontrado"));
+
+        if (!esRolPermitido(rol)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol no permitido");
+        }
+
+        Grupo grupo = grupoRepository.findById(grupoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo no encontrado"));
+
+        Usuario usuario = new Usuario();
+        usuario.setUsername(username);
+        usuario.setNombre(nombre);
+        usuario.setApellidos(apellidos);
+        usuario.setEmail(normalizarTextoOpcional(email));
+        usuario.setDni(dni);
+        usuario.setPassword(passwordEncoder.encode(password));
+        usuario.setRol(rol);
+        usuario.setGrupo(grupo);
+        usuario.setActivo(activo);
+
+        return mapToAdminResponse(usuarioRepository.save(usuario));
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse obtenerPerfilActual(String username) {
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        UserResponse response = new UserResponse();
+        response.setId(usuario.getId());
+        response.setUsername(usuario.getUsername());
+        response.setNombre(usuario.getNombre());
+        response.setApellidos(usuario.getApellidos());
+        response.setEmail(usuario.getEmail());
+        response.setDni(usuario.getDni());
+        response.setActivo(usuario.getActivo());
+
+        if (usuario.getRol() != null) {
+            response.setRol(usuario.getRol().getNombre());
+        }
+
+        if (usuario.getGrupo() != null) {
+            response.setGrupo(usuario.getGrupo().getNombre());
+        }
+
+        return response;
+    }
+
+    @Transactional(readOnly = true)
     public List<AdminUsuarioResponse> obtenerUsuariosAdmin() {
         return usuarioRepository.findAll().stream()
                 .sorted(Comparator.comparing(Usuario::getId))
@@ -83,6 +149,7 @@ public class UsuarioService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<RolResponse> obtenerRolesAdmin() {
         return rolRepository.findAll().stream()
                 .filter(this::esRolPermitido)
@@ -198,6 +265,10 @@ public class UsuarioService {
 
         if (usuario.getRol() != null) {
             response.setRol(usuario.getRol().getNombre());
+            response.setPermisos(usuario.getRol().getPermisos().stream()
+                    .map(Permiso::getNombre)
+                    .sorted()
+                    .toList());
         }
 
         if (usuario.getGrupo() != null) {

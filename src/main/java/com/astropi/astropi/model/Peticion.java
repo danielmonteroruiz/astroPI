@@ -161,4 +161,8 @@ public class Peticion {
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
 }

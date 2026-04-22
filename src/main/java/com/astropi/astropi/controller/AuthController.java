@@ -4,8 +4,9 @@ import com.astropi.astropi.controller.dto.auth.LoginRequest;
 import com.astropi.astropi.controller.dto.auth.LoginResponse;
 import com.astropi.astropi.controller.dto.auth.RegisterRequest;
 import com.astropi.astropi.controller.dto.auth.UserResponse;
-import com.astropi.astropi.model.Usuario;
+import com.astropi.astropi.controller.dto.common.MensajeResponse;
 import com.astropi.astropi.security.JwtUtil;
+import com.astropi.astropi.service.PeticionService;
 import com.astropi.astropi.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class AuthController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private PeticionService peticionService;
 
 
     /**
@@ -62,37 +66,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public UserResponse register(@Valid @RequestBody RegisterRequest request) {
-
-        Usuario usuario = new Usuario();
-        usuario.setUsername(request.getUsername());
-        usuario.setNombre(request.getNombre());
-        usuario.setApellidos(request.getApellidos());
-        usuario.setEmail(request.getEmail());
-        usuario.setDni(request.getDni());
-        usuario.setPassword(request.getPassword());
-
-        Usuario usuarioRegistrado = usuarioService.registrarUsuario(usuario);
-
-        return new UserResponse(
-                usuarioRegistrado.getUsername(),
-                "ROLE_" + usuarioRegistrado.getRol().getNombre()
-        );
+    public MensajeResponse register(@Valid @RequestBody RegisterRequest request) {
+        peticionService.crearSolicitudAltaUsuario(request);
+        return new MensajeResponse("Solicitud de alta enviada al grupo Administradores");
     }
 
     @GetMapping("/me")
     public UserResponse getCurrentUser(Authentication authentication){
-
-        // Username obtenido desde el token JWT.
-        String username = authentication.getName();
-
-        // Rol obtenido desde el token JWT.
-        String role = authentication.getAuthorities().stream()
-                .map(authority -> authority.getAuthority())
-                .filter(authority -> authority.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("ROLE_USER");
-        return new UserResponse(username, role);
+        return usuarioService.obtenerPerfilActual(authentication.getName());
     }
 
     private String obtenerRolPrincipal(UserDetails userDetails) {

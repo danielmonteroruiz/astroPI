@@ -6,6 +6,7 @@ import com.astropi.astropi.controller.dto.admin.AsignarGrupoRequest;
 import com.astropi.astropi.controller.dto.admin.AsignarPermisoRequest;
 import com.astropi.astropi.controller.dto.admin.AsignarRolRequest;
 import com.astropi.astropi.controller.dto.admin.CambiarPasswordUsuarioRequest;
+import com.astropi.astropi.controller.dto.admin.CrearUsuarioAdminRequest;
 import com.astropi.astropi.controller.dto.admin.PermisoRequest;
 import com.astropi.astropi.controller.dto.admin.PermisoResponse;
 import com.astropi.astropi.controller.dto.admin.RolResponse;
@@ -65,6 +66,30 @@ public class AdminController {
     @GetMapping("/usuarios")
     public ResponseEntity<List<AdminUsuarioResponse>> obtenerUsuarios() {
         return ResponseEntity.ok(usuarioService.obtenerUsuariosAdmin());
+    }
+
+    @PostMapping("/usuarios")
+    public ResponseEntity<AdminUsuarioResponse> crearUsuario(
+            @Valid @RequestBody CrearUsuarioAdminRequest request) {
+
+        AdminUsuarioResponse usuario = usuarioService.crearUsuarioAdmin(
+                request.getUsername(),
+                request.getNombre(),
+                request.getApellidos(),
+                request.getEmail(),
+                request.getDni(),
+                request.getPassword(),
+                request.getRolId(),
+                request.getGrupoId(),
+                request.getActivo()
+        );
+
+        return ResponseEntity.ok(usuario);
+    }
+
+    @GetMapping("/grupos")
+    public ResponseEntity<List<GrupoResponse>> obtenerGruposAdmin() {
+        return ResponseEntity.ok(grupoService.obtenerGrupos());
     }
 
     @GetMapping("/roles")

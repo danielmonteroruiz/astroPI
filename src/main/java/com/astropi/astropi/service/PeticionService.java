@@ -3,6 +3,7 @@ package com.astropi.astropi.service;
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
+import com.astropi.astropi.controller.dto.auth.RegisterRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
 import com.astropi.astropi.model.ComentarioPeticion;
 import com.astropi.astropi.model.EstadoPeticion;
@@ -65,6 +66,23 @@ public class PeticionService {
         peticion.setCodigoTicket(generarCodigoTicket());
 
         return peticionRepository.save(peticion);
+    }
+
+    public PeticionResponse crearSolicitudAltaUsuario(RegisterRequest request) {
+        Grupo grupo = grupoRepository.findByNombre("Administradores")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grupo Administradores no encontrado"));
+
+        Peticion peticion = new Peticion();
+        peticion.setTitulo("Solicitud de alta de usuario: " + request.getUsername());
+        peticion.setDescripcion(construirDescripcionSolicitudAlta(request));
+        peticion.setServicio("Cuentas");
+        peticion.setCategoria("Alta de usuario");
+        peticion.setEstado(EstadoPeticion.ABIERTA);
+        peticion.setGrupo(grupo);
+        peticion.setCodigoTicket(generarCodigoTicket());
+        peticion.setFechaCreacion(LocalDateTime.now());
+
+        return mapToResponse(peticionRepository.save(peticion));
     }
 
     public List<PeticionResponse> obtenerMisPeticiones(String username) {
@@ -253,6 +271,15 @@ public class PeticionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Peticion no encontrada"));
     }
 
+    private String construirDescripcionSolicitudAlta(RegisterRequest request) {
+        return "Solicitud de alta de usuario solicitada desde el registro publico.\n"
+                + "Username: " + request.getUsername() + "\n"
+                + "Nombre: " + request.getNombre() + "\n"
+                + "Apellidos: " + request.getApellidos() + "\n"
+                + "Email: " + (request.getEmail() == null ? "" : request.getEmail()) + "\n"
+                + "DNI: " + request.getDni();
+    }
+
     private String generarCodigoTicket() {
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         int siguienteNumero = obtenerSiguienteNumeroTicket();
@@ -294,13 +321,15 @@ public class PeticionService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
+            if (!esSuperAdmin(usuario)) {
+                Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
 
-            if (usuario.getGrupo() != null) {
-                Predicate mismoGrupo = criteriaBuilder.equal(root.get("grupo").get("id"), usuario.getGrupo().getId());
-                predicates.add(criteriaBuilder.or(esCreador, mismoGrupo));
-            } else {
-                predicates.add(esCreador);
+                if (usuario.getGrupo() != null) {
+                    Predicate mismoGrupo = criteriaBuilder.equal(root.get("grupo").get("id"), usuario.getGrupo().getId());
+                    predicates.add(criteriaBuilder.or(esCreador, mismoGrupo));
+                } else {
+                    predicates.add(esCreador);
+                }
             }
 
             if (estado != null) {
@@ -358,6 +387,10 @@ public class PeticionService {
     }
 
     private boolean puedeGestionarPeticion(Usuario usuario, Peticion peticion) {
+        if (esSuperAdmin(usuario)) {
+            return true;
+        }
+
         boolean esCreador = peticion.getUsuario() != null
                 && peticion.getUsuario().getUsername().equals(usuario.getUsername());
 
@@ -377,6 +410,10 @@ public class PeticionService {
                 || !peticion.getGrupo().getId().equals(usuarioAsignado.getGrupo().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario asignado debe pertenecer al mismo grupo");
         }
+    }
+
+    private boolean esSuperAdmin(Usuario usuario) {
+        return usuario.getRol() != null && "SUPER_ADMIN".equals(usuario.getRol().getNombre());
     }
 
     private void validarCambioEstado(EstadoPeticion estadoActual, EstadoPeticion nuevoEstado) {

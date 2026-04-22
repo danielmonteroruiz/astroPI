@@ -2,6 +2,8 @@ package com.astropi.astropi.controller.dto.admin;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
+
 @JsonPropertyOrder({
         "id",
         "username",
@@ -11,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "dni",
         "activo",
         "rol",
+        "permisos",
         "grupo"
 })
 public class AdminUsuarioResponse {
@@ -23,6 +26,7 @@ public class AdminUsuarioResponse {
     private String dni;
     private Boolean activo;
     private String rol;
+    private List<String> permisos;
     private String grupo;
 
     public Long getId() {
@@ -87,6 +91,14 @@ public class AdminUsuarioResponse {
 
     public void setRol(String rol) {
         this.rol = rol;
+    }
+
+    public List<String> getPermisos() {
+        return permisos;
+    }
+
+    public void setPermisos(List<String> permisos) {
+        this.permisos = permisos;
     }
 
     public String getGrupo() {

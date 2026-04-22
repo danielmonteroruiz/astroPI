@@ -58,16 +58,46 @@ function ProtectedRoute({ user, children }) {
   return children;
 }
 
-function LoginPage({ onLogin, loading, error }) {
+function AdminRoute({ user, children }) {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.rol !== "SUPER_ADMIN") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function LoginPage({ onLogin, onRegister, loading, registerLoading, error, registerMessage }) {
+  const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ username: "superadmin", password: "admin123" });
+  const [registerForm, setRegisterForm] = useState({
+    username: "",
+    nombre: "",
+    apellidos: "",
+    email: "",
+    dni: "",
+    password: ""
+  });
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateRegisterField(field, value) {
+    setRegisterForm((current) => ({ ...current, [field]: value }));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     await onLogin(form);
+  }
+
+  async function handleRegisterSubmit(event) {
+    event.preventDefault();
+    await onRegister(registerForm);
   }
 
   return (
@@ -80,30 +110,112 @@ function LoginPage({ onLogin, loading, error }) {
             Frontend React conectado con Spring Boot, JWT y PostgreSQL.
           </p>
         </div>
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>Username</span>
-            <input
-              type="text"
-              value={form.username}
-              onChange={(event) => updateField("username", event.target.value)}
-              required
-            />
-          </label>
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => updateField("password", event.target.value)}
-              required
-            />
-          </label>
-          {error ? <p className="form-error">{error}</p> : null}
-          <button className="primary-button" type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
+        <div className="login-form">
+          <div className="mode-switch">
+            <button
+              className={mode === "login" ? "nav-button active" : "nav-button"}
+              type="button"
+              onClick={() => setMode("login")}
+            >
+              Iniciar sesion
+            </button>
+            <button
+              className={mode === "register" ? "nav-button active" : "nav-button"}
+              type="button"
+              onClick={() => setMode("register")}
+            >
+              Solicitar alta
+            </button>
+          </div>
+
+          {mode === "login" ? (
+            <form className="stack-form" onSubmit={handleSubmit}>
+              <label>
+                <span>Username</span>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(event) => updateField("username", event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(event) => updateField("password", event.target.value)}
+                  required
+                />
+              </label>
+              {error ? <p className="form-error">{error}</p> : null}
+              <button className="primary-button" type="submit" disabled={loading}>
+                {loading ? "Entrando..." : "Entrar"}
+              </button>
+            </form>
+          ) : (
+            <form className="stack-form" onSubmit={handleRegisterSubmit}>
+              <label>
+                <span>Username</span>
+                <input
+                  type="text"
+                  value={registerForm.username}
+                  onChange={(event) => updateRegisterField("username", event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span>Nombre</span>
+                <input
+                  type="text"
+                  value={registerForm.nombre}
+                  onChange={(event) => updateRegisterField("nombre", event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span>Apellidos</span>
+                <input
+                  type="text"
+                  value={registerForm.apellidos}
+                  onChange={(event) => updateRegisterField("apellidos", event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={registerForm.email}
+                  onChange={(event) => updateRegisterField("email", event.target.value)}
+                />
+              </label>
+              <label>
+                <span>DNI</span>
+                <input
+                  type="text"
+                  value={registerForm.dni}
+                  onChange={(event) => updateRegisterField("dni", event.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span>Password propuesta</span>
+                <input
+                  type="password"
+                  value={registerForm.password}
+                  onChange={(event) => updateRegisterField("password", event.target.value)}
+                  required
+                />
+              </label>
+              {registerMessage ? <p className="form-success">{registerMessage}</p> : null}
+              {error ? <p className="form-error">{error}</p> : null}
+              <button className="primary-button" type="submit" disabled={registerLoading}>
+                {registerLoading ? "Enviando..." : "Enviar solicitud"}
+              </button>
+            </form>
+          )}
+        </div>
       </section>
     </main>
   );
@@ -111,10 +223,12 @@ function LoginPage({ onLogin, loading, error }) {
 
 function AppLayout({ user, onLogout, children }) {
   const location = useLocation();
+  const adminLinks = user?.rol === "SUPER_ADMIN" ? [{ to: "/admin", label: "Admin" }] : [];
   const links = [
     { to: "/dashboard", label: "Resumen" },
     { to: "/incidencias", label: "Incidencias" },
-    { to: "/peticiones", label: "Peticiones" }
+    { to: "/peticiones", label: "Peticiones" },
+    ...adminLinks
   ];
 
   return (
@@ -144,6 +258,212 @@ function AppLayout({ user, onLogout, children }) {
       </header>
       {children}
     </main>
+  );
+}
+
+function AdminPage({
+  usuarios,
+  grupos,
+  roles,
+  permisos,
+  onRefresh,
+  onCreateGroup,
+  onDeleteGroup,
+  onCreateUser,
+  onDeleteUser
+}) {
+  const [groupName, setGroupName] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [userForm, setUserForm] = useState({
+    username: "",
+    nombre: "",
+    apellidos: "",
+    email: "",
+    dni: "",
+    password: "",
+    rolId: roles[0]?.id || "",
+    grupoId: grupos[0]?.id || "",
+    activo: true
+  });
+
+  useEffect(() => {
+    setUserForm((current) => ({
+      ...current,
+      rolId: current.rolId || roles[0]?.id || "",
+      grupoId: current.grupoId || grupos[0]?.id || ""
+    }));
+  }, [roles, grupos]);
+
+  async function handleCreateGroup(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onCreateGroup(groupName);
+      setGroupName("");
+      setMessage("Grupo creado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleCreateUser(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      await onCreateUser({
+        ...userForm,
+        rolId: Number(userForm.rolId),
+        grupoId: Number(userForm.grupoId)
+      });
+      setUserForm((current) => ({
+        ...current,
+        username: "",
+        nombre: "",
+        apellidos: "",
+        email: "",
+        dni: "",
+        password: ""
+      }));
+      setMessage("Usuario creado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleDeleteGroup(groupId) {
+    setMessage("");
+    setError("");
+
+    try {
+      await onDeleteGroup(groupId);
+      setMessage("Grupo borrado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleDeleteUser(userId) {
+    setMessage("");
+    setError("");
+
+    try {
+      await onDeleteUser(userId);
+      setMessage("Usuario borrado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  return (
+    <section className="admin-grid">
+      <section className="list-panel">
+        <div className="section-heading">
+          <p className="eyebrow">Administracion</p>
+          <h2>Grupos y permisos</h2>
+        </div>
+        <form className="stack-form" onSubmit={handleCreateGroup}>
+          <label>
+            <span>Nuevo grupo</span>
+            <input value={groupName} onChange={(event) => setGroupName(event.target.value)} required />
+          </label>
+          <button className="primary-button" type="submit">Crear grupo</button>
+        </form>
+        <div className="ticket-list">
+          {grupos.map((grupo) => (
+            <article className="ticket-row" key={`grupo-${grupo.id}`}>
+              <div className="ticket-main">
+                <strong>{grupo.nombre}</strong>
+              </div>
+              <div className="ticket-meta">
+                <button className="secondary-button" type="button" onClick={() => handleDeleteGroup(grupo.id)}>
+                  Borrar grupo
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="ticket-list">
+          {roles.map((rol) => (
+            <article className="ticket-row" key={`rol-${rol.id}`}>
+              <div className="ticket-main">
+                <strong>{rol.nombre}</strong>
+                <p>Permisos: {rol.permisos?.length ? rol.permisos.join(", ") : "Sin permisos"}</p>
+              </div>
+            </article>
+          ))}
+          {permisos.length ? (
+            <article className="ticket-row">
+              <div className="ticket-main">
+                <strong>Permisos disponibles</strong>
+                <p>{permisos.map((permiso) => permiso.nombre).join(", ")}</p>
+              </div>
+            </article>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="list-panel">
+        <div className="section-heading">
+          <p className="eyebrow">Administracion</p>
+          <h2>Usuarios</h2>
+        </div>
+        <form className="stack-form" onSubmit={handleCreateUser}>
+          <label><span>Username</span><input value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} required /></label>
+          <label><span>Nombre</span><input value={userForm.nombre} onChange={(event) => setUserForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
+          <label><span>Apellidos</span><input value={userForm.apellidos} onChange={(event) => setUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
+          <label><span>Email</span><input type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
+          <label><span>DNI</span><input value={userForm.dni} onChange={(event) => setUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
+          <label><span>Password</span><input type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} required /></label>
+          <label>
+            <span>Rol</span>
+            <select value={userForm.rolId} onChange={(event) => setUserForm((current) => ({ ...current, rolId: event.target.value }))} required>
+              {roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Grupo</span>
+            <select value={userForm.grupoId} onChange={(event) => setUserForm((current) => ({ ...current, grupoId: event.target.value }))} required>
+              {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Activo</span>
+            <select value={String(userForm.activo)} onChange={(event) => setUserForm((current) => ({ ...current, activo: event.target.value === "true" }))}>
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </label>
+          <button className="primary-button" type="submit">Crear usuario</button>
+        </form>
+
+        {message ? <p className="form-success">{message}</p> : null}
+        {error ? <p className="form-error">{error}</p> : null}
+
+        <div className="ticket-list">
+          {usuarios.map((usuario) => (
+            <article className="ticket-row" key={`usuario-${usuario.id}`}>
+              <div className="ticket-main">
+                <strong>{usuario.username}</strong>
+                <p>{usuario.nombre} {usuario.apellidos}</p>
+                <p>{usuario.rol} | {usuario.grupo}</p>
+                <p>Permisos: {usuario.permisos?.length ? usuario.permisos.join(", ") : "Sin permisos"}</p>
+              </div>
+              <div className="ticket-meta">
+                <button className="secondary-button" type="button" onClick={() => handleDeleteUser(usuario.id)}>
+                  Borrar usuario
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <button className="secondary-button" type="button" onClick={onRefresh}>Recargar admin</button>
+      </section>
+    </section>
   );
 }
 
@@ -461,7 +781,13 @@ function TicketsPage({
   }
 
   async function handleFilterChange(estado) {
-    const nextFilters = { estado };
+    const nextFilters = { ...filters, estado };
+    setFilters(nextFilters);
+    await onRefresh(nextFilters);
+  }
+
+  async function handleGroupFilterChange(grupoId) {
+    const nextFilters = { ...filters, grupoId };
     setFilters(nextFilters);
     await onRefresh(nextFilters);
   }
@@ -561,6 +887,17 @@ function TicketsPage({
                 </option>
               ))}
             </select>
+            <select
+              value={filters.grupoId || ""}
+              onChange={(event) => handleGroupFilterChange(event.target.value)}
+            >
+              <option value="">Todos los grupos</option>
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.nombre}
+                </option>
+              ))}
+            </select>
             <button className="secondary-button" type="button" onClick={() => onRefresh(filters)}>
               Recargar
             </button>
@@ -595,13 +932,19 @@ export default function App() {
   const navigate = useNavigate();
   const [authLoading, setAuthLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [registerMessage, setRegisterMessage] = useState("");
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
   const [peticiones, setPeticiones] = useState([]);
   const [incidenciaAssignables, setIncidenciaAssignables] = useState([]);
   const [peticionAssignables, setPeticionAssignables] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminRoles, setAdminRoles] = useState([]);
+  const [adminPermisos, setAdminPermisos] = useState([]);
+  const [adminGroups, setAdminGroups] = useState([]);
 
   async function loadGroups() {
     const data = await apiRequest("/grupos");
@@ -619,6 +962,9 @@ export default function App() {
     if (filters.estado) {
       params.set("estado", filters.estado);
     }
+    if (filters.grupoId) {
+      params.set("grupoId", filters.grupoId);
+    }
 
     const data = await apiRequest(`/incidencias?${params.toString()}`);
     setIncidencias(data.content || []);
@@ -635,6 +981,9 @@ export default function App() {
     if (filters.estado) {
       params.set("estado", filters.estado);
     }
+    if (filters.grupoId) {
+      params.set("grupoId", filters.grupoId);
+    }
 
     const data = await apiRequest(`/peticiones?${params.toString()}`);
     setPeticiones(data.content || []);
@@ -643,6 +992,20 @@ export default function App() {
   async function loadPeticionAssignables() {
     const data = await apiRequest("/peticiones/asignables");
     setPeticionAssignables(data);
+  }
+
+  async function loadAdminData() {
+    const [usuarios, gruposAdmin, roles, permisos] = await Promise.all([
+      apiRequest("/admin/usuarios"),
+      apiRequest("/admin/grupos"),
+      apiRequest("/admin/roles"),
+      apiRequest("/admin/permisos")
+    ]);
+
+    setAdminUsers(usuarios);
+    setAdminGroups(gruposAdmin);
+    setAdminRoles(roles);
+    setAdminPermisos(permisos);
   }
 
   async function hydrateSession() {
@@ -654,14 +1017,20 @@ export default function App() {
     }
 
     try {
+      const currentUser = await apiRequest("/auth/me");
+      setUser(currentUser);
+
       await Promise.all([
-        loadMe(),
         loadGroups(),
         loadIncidencias(),
         loadPeticiones(),
         loadIncidenciaAssignables(),
         loadPeticionAssignables()
       ]);
+
+      if (currentUser.rol === "SUPER_ADMIN") {
+        await loadAdminData();
+      }
     } catch (_error) {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);
@@ -685,20 +1054,44 @@ export default function App() {
       });
 
       localStorage.setItem(TOKEN_KEY, data.token);
+      const currentUser = await apiRequest("/auth/me");
+      setUser(currentUser);
+
       await Promise.all([
-        loadMe(),
         loadGroups(),
         loadIncidencias(),
         loadPeticiones(),
         loadIncidenciaAssignables(),
         loadPeticionAssignables()
       ]);
+
+      if (currentUser.rol === "SUPER_ADMIN") {
+        await loadAdminData();
+      }
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setLoginError(requestError.message);
     } finally {
       setLoginLoading(false);
       setAuthLoading(false);
+    }
+  }
+
+  async function handleRegister(request) {
+    setRegisterLoading(true);
+    setLoginError("");
+    setRegisterMessage("");
+
+    try {
+      const data = await apiRequest("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(request)
+      });
+      setRegisterMessage(data.mensaje);
+    } catch (requestError) {
+      setLoginError(requestError.message);
+    } finally {
+      setRegisterLoading(false);
     }
   }
 
@@ -710,7 +1103,37 @@ export default function App() {
     setPeticiones([]);
     setIncidenciaAssignables([]);
     setPeticionAssignables([]);
+    setAdminUsers([]);
+    setAdminGroups([]);
+    setAdminRoles([]);
+    setAdminPermisos([]);
     navigate("/login", { replace: true });
+  }
+
+  async function createAdminGroup(nombre) {
+    await apiRequest("/admin/grupos", {
+      method: "POST",
+      body: JSON.stringify({ nombre })
+    });
+    await Promise.all([loadGroups(), loadAdminData()]);
+  }
+
+  async function deleteAdminGroup(groupId) {
+    await apiRequest(`/admin/grupos/${groupId}`, { method: "DELETE" });
+    await Promise.all([loadGroups(), loadAdminData()]);
+  }
+
+  async function createAdminUser(payload) {
+    await apiRequest("/admin/usuarios", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    await loadAdminData();
+  }
+
+  async function deleteAdminUser(userId) {
+    await apiRequest(`/admin/usuarios/${userId}`, { method: "DELETE" });
+    await loadAdminData();
   }
 
   async function updateTicketStatus(type, id, estado) {
@@ -794,7 +1217,16 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={<LoginPage onLogin={handleLogin} loading={loginLoading} error={loginError} />}
+        element={
+          <LoginPage
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            loading={loginLoading}
+            registerLoading={registerLoading}
+            error={loginError}
+            registerMessage={registerMessage}
+          />
+        }
       />
       <Route
         path="/dashboard"
@@ -807,6 +1239,26 @@ export default function App() {
         }
       />
       <Route
+        path="/admin"
+        element={
+          <AdminRoute user={user}>
+            <AppLayout user={user} onLogout={handleLogout}>
+              <AdminPage
+                usuarios={adminUsers}
+                grupos={adminGroups}
+                roles={adminRoles}
+                permisos={adminPermisos}
+                onRefresh={loadAdminData}
+                onCreateGroup={createAdminGroup}
+                onDeleteGroup={deleteAdminGroup}
+                onCreateUser={createAdminUser}
+                onDeleteUser={deleteAdminUser}
+              />
+            </AppLayout>
+          </AdminRoute>
+        }
+      />
+      <Route
         path="/incidencias"
         element={
           <ProtectedRoute user={user}>
@@ -814,7 +1266,7 @@ export default function App() {
               <TicketsPage
                 title="Incidencias"
                 endpoint="incidencias"
-                currentUsername={user.username}
+                currentUsername={user?.username || ""}
                 groups={groups}
                 tickets={incidencias}
                 assignables={incidenciaAssignables}
@@ -839,7 +1291,7 @@ export default function App() {
               <TicketsPage
                 title="Peticiones"
                 endpoint="peticiones"
-                currentUsername={user.username}
+                currentUsername={user?.username || ""}
                 groups={groups}
                 tickets={peticiones}
                 assignables={peticionAssignables}
