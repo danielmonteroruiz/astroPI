@@ -116,6 +116,9 @@ public class PeticionService {
                                                                           EstadoPeticion estado,
                                                                           String servicio,
                                                                           String categoria,
+                                                                          String codigoTicket,
+                                                                          String titulo,
+                                                                          String categoriaTexto,
                                                                           Long grupoId,
                                                                           LocalDate fechaDesde,
                                                                           LocalDate fechaHasta,
@@ -132,6 +135,9 @@ public class PeticionService {
                 estado,
                 servicio,
                 categoria,
+                codigoTicket,
+                titulo,
+                categoriaTexto,
                 grupoId,
                 fechaDesde,
                 fechaHasta
@@ -338,6 +344,9 @@ public class PeticionService {
                                                            EstadoPeticion estado,
                                                            String servicio,
                                                            String categoria,
+                                                           String codigoTicket,
+                                                           String titulo,
+                                                           String categoriaTexto,
                                                            Long grupoId,
                                                            LocalDate fechaDesde,
                                                            LocalDate fechaHasta) {
@@ -366,6 +375,27 @@ public class PeticionService {
 
             if (tieneTexto(categoria)) {
                 predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("categoria")), categoria.toLowerCase()));
+            }
+
+            if (tieneTexto(codigoTicket)) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("codigoTicket")),
+                        "%" + codigoTicket.toLowerCase() + "%"
+                ));
+            }
+
+            if (tieneTexto(titulo)) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("titulo")),
+                        "%" + titulo.toLowerCase() + "%"
+                ));
+            }
+
+            if (tieneTexto(categoriaTexto)) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("categoria")),
+                        "%" + categoriaTexto.toLowerCase() + "%"
+                ));
             }
 
             if (grupoId != null) {

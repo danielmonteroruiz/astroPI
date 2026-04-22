@@ -9,7 +9,10 @@ const DEFAULT_TICKET_FILTERS = {
   estado: "",
   grupoId: "",
   fechaDesde: "",
-  fechaHasta: ""
+  fechaHasta: "",
+  codigoTicket: "",
+  titulo: "",
+  categoriaTexto: ""
 };
 const CATALOGOS_TICKETS = {
   incidencias: {
@@ -1555,6 +1558,10 @@ function TicketsPage({
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
   const catalogo = CATALOGOS_TICKETS[endpoint];
   const servicios = useMemo(() => Object.keys(catalogo), [catalogo]);
+  const categoriasDisponibles = useMemo(
+    () => [...new Set(Object.values(catalogo).flat())].sort(),
+    [catalogo]
+  );
 
   const initialForm = useMemo(
     () => ({
@@ -1769,52 +1776,52 @@ function TicketsPage({
                 <p className="eyebrow">Listado</p>
                 <h2>{title}</h2>
               </div>
-              <div className="filter-strip">
-                <label className="filter-field">
-                  <span>Estado</span>
-                  <select
-                    value={filters.estado}
-                    onChange={(event) => handleFilterChange("estado", event.target.value)}
-                  >
-                    <option value="">Mostrar todos</option>
-                    {ESTADOS_TICKET.map((estado) => (
-                      <option key={estado} value={estado}>
-                        {estado}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="filter-field">
-                  <span>Grupo</span>
-                  <select
-                    value={filters.grupoId || ""}
-                    onChange={(event) => handleFilterChange("grupoId", event.target.value)}
-                  >
-                    <option value="">Todos los grupos</option>
-                    {groups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="filter-field">
-                  <span>Desde</span>
-                  <input
-                    type="date"
-                    value={filters.fechaDesde}
-                    onChange={(event) => handleFilterChange("fechaDesde", event.target.value)}
-                  />
-                </label>
-                <label className="filter-field">
-                  <span>Hasta</span>
-                  <input
-                    type="date"
-                    value={filters.fechaHasta}
-                    onChange={(event) => handleFilterChange("fechaHasta", event.target.value)}
-                  />
-                </label>
-                {endpoint === "peticiones" ? (
+              <div className="filter-panel">
+                <div className="filter-row filter-row-top">
+                  <label className="filter-field">
+                    <span>Estado</span>
+                    <select
+                      value={filters.estado}
+                      onChange={(event) => handleFilterChange("estado", event.target.value)}
+                    >
+                      <option value="">Mostrar todos</option>
+                      {ESTADOS_TICKET.map((estado) => (
+                        <option key={estado} value={estado}>
+                          {estado}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="filter-field">
+                    <span>Grupo</span>
+                    <select
+                      value={filters.grupoId || ""}
+                      onChange={(event) => handleFilterChange("grupoId", event.target.value)}
+                    >
+                      <option value="">Todos los grupos</option>
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="filter-field">
+                    <span>Desde</span>
+                    <input
+                      type="date"
+                      value={filters.fechaDesde}
+                      onChange={(event) => handleFilterChange("fechaDesde", event.target.value)}
+                    />
+                  </label>
+                  <label className="filter-field">
+                    <span>Hasta</span>
+                    <input
+                      type="date"
+                      value={filters.fechaHasta}
+                      onChange={(event) => handleFilterChange("fechaHasta", event.target.value)}
+                    />
+                  </label>
                   <label className="filter-field">
                     <span>Fecha</span>
                     <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
@@ -1822,10 +1829,44 @@ function TicketsPage({
                       <option value="asc">Mas antiguas</option>
                     </select>
                   </label>
-                ) : null}
-                <button className="secondary-button aligned-filter-button" type="button" onClick={handleResetFilters}>
-                  Recargar
-                </button>
+                  <button className="secondary-button aligned-filter-button" type="button" onClick={handleResetFilters}>
+                    Recargar
+                  </button>
+                </div>
+                <div className="filter-row filter-row-bottom">
+                  <label className="filter-field">
+                    <span>ID</span>
+                    <input
+                      type="text"
+                      value={filters.codigoTicket}
+                      onChange={(event) => handleFilterChange("codigoTicket", event.target.value)}
+                      placeholder={endpoint === "incidencias" ? "I-" : "P-"}
+                    />
+                  </label>
+                  <label className="filter-field">
+                    <span>Asunto</span>
+                    <input
+                      type="text"
+                      value={filters.titulo}
+                      onChange={(event) => handleFilterChange("titulo", event.target.value)}
+                      placeholder="Buscar por asunto"
+                    />
+                  </label>
+                  <label className="filter-field">
+                    <span>Categoria</span>
+                    <select
+                      value={filters.categoriaTexto}
+                      onChange={(event) => handleFilterChange("categoriaTexto", event.target.value)}
+                    >
+                      <option value="">Todas las categorias</option>
+                      {categoriasDisponibles.map((categoria) => (
+                        <option key={`filtro-${endpoint}-${categoria}`} value={categoria}>
+                          {categoria}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -1925,6 +1966,15 @@ export default function App() {
     if (filters.grupoId) {
       params.set("grupoId", filters.grupoId);
     }
+    if (filters.codigoTicket) {
+      params.set("codigoTicket", filters.codigoTicket);
+    }
+    if (filters.titulo) {
+      params.set("titulo", filters.titulo);
+    }
+    if (filters.categoriaTexto) {
+      params.set("categoriaTexto", filters.categoriaTexto);
+    }
     if (filters.fechaDesde) {
       params.set("fechaDesde", filters.fechaDesde);
     }
@@ -1955,6 +2005,15 @@ export default function App() {
     }
     if (filters.grupoId) {
       params.set("grupoId", filters.grupoId);
+    }
+    if (filters.codigoTicket) {
+      params.set("codigoTicket", filters.codigoTicket);
+    }
+    if (filters.titulo) {
+      params.set("titulo", filters.titulo);
+    }
+    if (filters.categoriaTexto) {
+      params.set("categoriaTexto", filters.categoriaTexto);
     }
     if (filters.fechaDesde) {
       params.set("fechaDesde", filters.fechaDesde);

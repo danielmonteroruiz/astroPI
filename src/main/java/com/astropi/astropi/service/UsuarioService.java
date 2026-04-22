@@ -159,6 +159,7 @@ public class UsuarioService {
                 .toList();
     }
 
+    @Transactional
     public AdminUsuarioResponse actualizarUsuario(Long usuarioId,
                                                   String username,
                                                   String nombre,
@@ -184,6 +185,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    @Transactional
     public AdminUsuarioResponse asignarGrupo(Long usuarioId, Long grupoId) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -198,6 +200,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    @Transactional
     public AdminUsuarioResponse asignarRol(Long usuarioId, Long rolId, String usernameAdmin) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -218,6 +221,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    @Transactional
     public AdminUsuarioResponse actualizarActivo(Long usuarioId, Boolean activo, String usernameAdmin) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -231,6 +235,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    @Transactional
     public AdminUsuarioResponse cambiarPassword(Long usuarioId, String password) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -242,6 +247,7 @@ public class UsuarioService {
         return mapToAdminResponse(usuarioActualizado);
     }
 
+    @Transactional
     public void eliminarUsuario(Long usuarioId, String usernameAdmin) {
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
