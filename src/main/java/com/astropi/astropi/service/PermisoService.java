@@ -9,6 +9,7 @@ import com.astropi.astropi.repository.RolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
@@ -26,6 +27,7 @@ public class PermisoService {
     @Autowired
     private RolRepository rolRepository;
 
+    @Transactional(readOnly = true)
     public List<PermisoResponse> obtenerPermisos() {
         return permisoRepository.findAll().stream()
                 .sorted(Comparator.comparing(Permiso::getId))
@@ -33,6 +35,7 @@ public class PermisoService {
                 .toList();
     }
 
+    @Transactional
     public PermisoResponse crearPermiso(String nombre, String descripcion) {
 
         permisoRepository.findByNombre(nombre)
@@ -49,6 +52,7 @@ public class PermisoService {
         return mapToPermisoResponse(permisoGuardado);
     }
 
+    @Transactional
     public void eliminarPermiso(Long permisoId) {
 
         Permiso permiso = permisoRepository.findById(permisoId)
@@ -65,6 +69,7 @@ public class PermisoService {
         permisoRepository.delete(permiso);
     }
 
+    @Transactional
     public RolResponse asignarPermisoARol(Long rolId, Long permisoId) {
 
         Rol rol = obtenerRol(rolId);
@@ -76,6 +81,7 @@ public class PermisoService {
         return mapToRolResponse(rolActualizado);
     }
 
+    @Transactional
     public RolResponse quitarPermisoARol(Long rolId, Long permisoId) {
 
         Rol rol = obtenerRol(rolId);

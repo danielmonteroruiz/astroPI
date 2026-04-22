@@ -59,12 +59,22 @@ a {
   padding: 48px 0;
 }
 
+.brand-logo {
+  display: block;
+  height: auto;
+}
+
+.brand-logo-login {
+  width: min(220px, 55%);
+  margin-bottom: 16px;
+}
+
 .eyebrow {
   margin: 0 0 12px;
   font-size: 0.86rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #ffd36a;
+  color: #7fb5df;
 }
 
 .login-copy h1,
@@ -210,6 +220,15 @@ textarea {
   border-bottom: 1px solid rgba(23, 49, 58, 0.08);
 }
 
+.app-brand {
+  display: grid;
+  gap: 8px;
+}
+
+.brand-logo-header {
+  width: 120px;
+}
+
 .main-nav {
   display: flex;
   flex-wrap: wrap;
@@ -231,10 +250,18 @@ textarea {
 }
 
 .admin-group-form {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content auto;
   align-items: end;
-  gap: 10px;
+  column-gap: 18px;
+  row-gap: 8px;
   margin-top: 18px;
+}
+
+.admin-group-form .compact-button {
+  margin-left: 0;
+  width: auto;
+  justify-self: start;
 }
 
 .admin-group-input {
@@ -353,7 +380,7 @@ textarea {
 .filter-strip {
   grid-auto-flow: column;
   grid-auto-columns: max-content;
-  align-items: center;
+  align-items: end;
 }
 
 .filter-field {
@@ -402,9 +429,15 @@ textarea {
   gap: 2px;
 }
 
+.admin-row-main strong,
+.admin-row-main p {
+  margin: 0;
+}
+
 .admin-user-form {
   max-width: 440px;
   gap: 8px;
+  justify-items: start;
 }
 
 .admin-form-grid {
@@ -430,6 +463,7 @@ textarea {
 
 .admin-user-form label {
   gap: 5px;
+  justify-items: start;
 }
 
 .admin-select-row {
@@ -444,7 +478,7 @@ textarea {
   width: auto;
   min-width: 0;
   justify-self: start;
-  margin-top: 0;
+  margin-top: 8px;
 }
 
 .admin-grid .section-heading {
@@ -466,15 +500,15 @@ textarea {
 }
 
 .admin-users-panel .section-heading {
-  margin-bottom: -14px;
+  margin-bottom: 0;
 }
 
 .admin-users-panel form {
-  margin: 50px;
+  margin: 0;
 }
 
 .admin-users-panel .admin-user-form {
-  margin-top: 18px;
+  margin-top: 0;
   padding-top: 0;
 }
 
@@ -501,6 +535,47 @@ textarea {
 .admin-user-side {
   display: grid;
   gap: 10px;
+}
+
+.admin-subheading {
+  margin-top: 10px;
+}
+
+.admin-search-field {
+  justify-items: start;
+}
+
+.admin-search-field input {
+  max-width: 240px;
+}
+
+.admin-user-toggle {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+  color: #182026;
+}
+
+.admin-permission-modal {
+  width: min(460px, calc(100vw - 32px));
+}
+
+.permission-options {
+  display: grid;
+  gap: 8px;
+}
+
+.permission-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.permission-check input {
+  width: auto;
 }
 
 .admin-actions-row {
@@ -577,6 +652,10 @@ textarea {
   color: #182026;
 }
 
+.detail-label {
+  margin: 0;
+}
+
 .status-dot {
   width: 10px;
   height: 10px;
@@ -620,6 +699,15 @@ textarea {
   align-content: start;
 }
 
+.ticket-meta-box {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #d8e0e3;
+  border-radius: 8px;
+  background: #f7f9f8;
+}
+
 .ticket-badges {
   display: flex;
   flex-wrap: wrap;
@@ -644,10 +732,26 @@ textarea {
   gap: 10px;
 }
 
+.content-button {
+  width: fit-content;
+}
+
 .comment-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.aligned-filter-button {
+  align-self: end;
+}
+
+.pagination-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .comment-item {

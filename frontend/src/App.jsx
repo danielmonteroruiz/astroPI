@@ -5,6 +5,12 @@ const TOKEN_KEY = "astropi_token";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const ESTADOS_TICKET = ["ABIERTA", "EN_PROCESO", "PARADA", "RESUELTA", "CERRADA"];
 const ESTADOS_GESTION = ["ABIERTA", "EN_PROCESO", "CERRADA"];
+const DEFAULT_TICKET_FILTERS = {
+  estado: "",
+  grupoId: "",
+  fechaDesde: "",
+  fechaHasta: ""
+};
 const CATALOGOS_TICKETS = {
   incidencias: {
     Autenticacion: ["Error de login", "Recuperacion de acceso", "Bloqueo de cuenta"],
@@ -108,6 +114,21 @@ function PasswordIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true" className="icon-svg">
       <path
         d="M7 8 3 12l4 4M17 8l4 4-4 4M14 5l-4 14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="icon-svg">
+      <path
+        d="M12 5v14M5 12h14"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
@@ -224,7 +245,7 @@ function LoginPage({
     <main className="login-shell">
       <section className="login-hero">
         <div className="login-copy">
-          <p className="eyebrow">AstroPI</p>
+          <img className="brand-logo brand-logo-login" src="/astropi-logo.png" alt="AstroPI" />
           <h1>Gestiona incidencias y peticiones desde una interfaz real.</h1>
           <p className="login-text">
             Frontend React conectado con Spring Boot, JWT y PostgreSQL.
@@ -390,8 +411,8 @@ function AppLayout({ user, onLogout, children }) {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <div>
-          <p className="eyebrow">AstroPI</p>
+        <div className="app-brand">
+          <img className="brand-logo brand-logo-header" src="/astropi-logo.png" alt="AstroPI" />
           <h1>{user.nombre || user.username}</h1>
           <p className="header-meta">
             {user.rol} | {user.grupo || "Sin grupo"}
@@ -431,7 +452,10 @@ function AdminPage({
   onUpdateUser,
   onChangeUserPassword,
   onAssignRolePermission,
-  onRemoveRolePermission
+  onRemoveRolePermission,
+  onUpdateUserGroup,
+  onUpdateUserActive,
+  onCreatePermission
 }) {
   const [groupName, setGroupName] = useState("");
   const [message, setMessage] = useState("");
@@ -440,8 +464,16 @@ function AdminPage({
   const [editingGroupName, setEditingGroupName] = useState("");
   const [editingUserId, setEditingUserId] = useState(null);
   const [editingUserForm, setEditingUserForm] = useState(null);
+  const [expandedUserId, setExpandedUserId] = useState(null);
   const [passwordForm, setPasswordForm] = useState({ userId: null, password: "" });
   const [rolePermissionSelection, setRolePermissionSelection] = useState({});
+  const [userSearch, setUserSearch] = useState("");
+  const [userPage, setUserPage] = useState(0);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionForm, setPermissionForm] = useState({
+    nombre: "",
+    opciones: []
+  });
   const [userForm, setUserForm] = useState({
     username: "",
     nombre: "",
@@ -453,6 +485,29 @@ function AdminPage({
     grupoId: grupos[0]?.id || "",
     activo: true
   });
+  const permissionOptions = [
+    "Ver tickets de grupo",
+    "Gestionar tickets",
+    "Cambiar estado de tickets",
+    "Asignar tickets",
+    "Gestionar comentarios",
+    "Crear usuarios",
+    "Resetear passwords"
+  ];
+  const filteredUsers = usuarios.filter((usuario) => {
+    const term = userSearch.trim().toLowerCase();
+
+    if (!term) {
+      return true;
+    }
+
+    return (
+      usuario.username.toLowerCase().includes(term) ||
+      (usuario.email || "").toLowerCase().includes(term)
+    );
+  });
+  const pagedUsers = filteredUsers.slice(userPage * 10, userPage * 10 + 10);
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / 10));
 
   useEffect(() => {
     setUserForm((current) => ({
@@ -461,6 +516,10 @@ function AdminPage({
       grupoId: current.grupoId || grupos[0]?.id || ""
     }));
   }, [roles, grupos]);
+
+  useEffect(() => {
+    setUserPage(0);
+  }, [userSearch]);
 
   async function handleCreateGroup(event) {
     event.preventDefault();
@@ -548,6 +607,8 @@ function AdminPage({
 
     try {
       await onUpdateUser(editingUserId, editingUserForm);
+      await onUpdateUserGroup(editingUserId, Number(editingUserForm.grupoId));
+      await onUpdateUserActive(editingUserId, editingUserForm.activo);
       setEditingUserId(null);
       setEditingUserForm(null);
       setMessage("Usuario actualizado correctamente");
@@ -584,6 +645,24 @@ function AdminPage({
       await onAssignRolePermission(roleId, Number(permisoId));
       setRolePermissionSelection((current) => ({ ...current, [roleId]: "" }));
       setMessage("Permiso asignado correctamente");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  }
+
+  async function handleCreatePermission(event) {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    try {
+      const descripcion = permissionForm.opciones.length
+        ? `Opciones: ${permissionForm.opciones.join(", ")}`
+        : null;
+      await onCreatePermission(permissionForm.nombre, descripcion);
+      setPermissionForm({ nombre: "", opciones: [] });
+      setShowPermissionModal(false);
+      setMessage("Permiso creado correctamente");
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -736,6 +815,16 @@ function AdminPage({
                 <strong>Permisos disponibles</strong>
                 <p>{permisos.map((permiso) => permiso.nombre).join(", ")}</p>
               </div>
+              <div className="admin-actions-row">
+                <button
+                  className="secondary-button icon-button"
+                  type="button"
+                  title="Crear permiso"
+                  onClick={() => setShowPermissionModal(true)}
+                >
+                  <PlusIcon />
+                </button>
+              </div>
             </article>
           ) : null}
         </div>
@@ -744,7 +833,7 @@ function AdminPage({
       <section className="list-panel admin-users-panel">
         <div className="section-heading">
           <p className="eyebrow">Administracion</p>
-          <h2>Usuarios</h2>
+          <h2>Crear Usuario</h2>
         </div>
         <form className="stack-form admin-user-form" onSubmit={handleCreateUser}>
           <div className="admin-form-grid">
@@ -782,8 +871,19 @@ function AdminPage({
         {message ? <p className="form-success">{message}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
 
+        <div className="section-heading admin-subheading">
+          <h2>Usuarios</h2>
+        </div>
+        <label className="admin-search-field">
+          <span>Buscar usuario</span>
+          <input
+            value={userSearch}
+            onChange={(event) => setUserSearch(event.target.value)}
+            placeholder="Username o email"
+          />
+        </label>
         <div className="ticket-list">
-          {usuarios.map((usuario) => (
+          {pagedUsers.map((usuario) => (
             <article className="ticket-row" key={`usuario-${usuario.id}`}>
               <div className="ticket-main">
                 {editingUserId === usuario.id ? (
@@ -793,6 +893,19 @@ function AdminPage({
                     <label><span>Apellidos</span><input value={editingUserForm.apellidos} onChange={(event) => setEditingUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
                     <label><span>Email</span><input type="email" value={editingUserForm.email || ""} onChange={(event) => setEditingUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
                     <label><span>DNI</span><input value={editingUserForm.dni} onChange={(event) => setEditingUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
+                    <label>
+                      <span>Grupo</span>
+                      <select value={editingUserForm.grupoId} onChange={(event) => setEditingUserForm((current) => ({ ...current, grupoId: event.target.value }))} required>
+                        {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      <span>Activo</span>
+                      <select value={String(editingUserForm.activo)} onChange={(event) => setEditingUserForm((current) => ({ ...current, activo: event.target.value === "true" }))}>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                      </select>
+                    </label>
                     <div className="comment-actions">
                       <button className="secondary-button" type="submit">Guardar</button>
                       <button className="secondary-button" type="button" onClick={() => { setEditingUserId(null); setEditingUserForm(null); }}>
@@ -802,10 +915,22 @@ function AdminPage({
                   </form>
                 ) : (
                   <>
-                    <strong>{usuario.username}</strong>
-                    <p>{usuario.nombre} {usuario.apellidos}</p>
-                    <p>{usuario.rol} | {usuario.grupo}</p>
-                    <p>Permisos: {usuario.permisos?.length ? usuario.permisos.join(", ") : "Sin permisos"}</p>
+                    <button
+                      className="admin-user-toggle"
+                      type="button"
+                      onClick={() => setExpandedUserId((current) => current === usuario.id ? null : usuario.id)}
+                    >
+                      <strong>{usuario.username}</strong>
+                    </button>
+                    {expandedUserId === usuario.id ? (
+                      <>
+                        <p>{usuario.nombre} {usuario.apellidos}</p>
+                        <p>{usuario.rol} | {usuario.grupo}</p>
+                        <p>{usuario.email || "Sin email"}</p>
+                        <p>{usuario.activo ? "Activo" : "Inactivo"}</p>
+                        <p>Permisos: {usuario.permisos?.length ? usuario.permisos.join(", ") : "Sin permisos"}</p>
+                      </>
+                    ) : null}
                   </>
                 )}
               </div>
@@ -822,7 +947,9 @@ function AdminPage({
                         nombre: usuario.nombre,
                         apellidos: usuario.apellidos,
                         email: usuario.email || "",
-                        dni: usuario.dni
+                        dni: usuario.dni,
+                        grupoId: grupos.find((grupo) => grupo.nombre === usuario.grupo)?.id || "",
+                        activo: usuario.activo
                       });
                     }}
                   >
@@ -870,8 +997,60 @@ function AdminPage({
             </article>
           ))}
         </div>
+        {filteredUsers.length > 10 ? (
+          <div className="pagination-strip">
+            <button className="secondary-button" type="button" onClick={() => setUserPage((current) => current - 1)} disabled={userPage === 0}>
+              Anterior
+            </button>
+            <span>Pagina {userPage + 1} de {totalUserPages}</span>
+            <button className="secondary-button" type="button" onClick={() => setUserPage((current) => current + 1)} disabled={userPage + 1 >= totalUserPages}>
+              Siguiente
+            </button>
+          </div>
+        ) : null}
         <button className="secondary-button" type="button" onClick={onRefresh}>Recargar admin</button>
       </section>
+      {showPermissionModal ? (
+        <div className="modal-overlay">
+          <section className="draggable-modal admin-permission-modal">
+            <header className="modal-header">
+              <strong>Crear permiso</strong>
+              <button className="secondary-button" type="button" onClick={() => setShowPermissionModal(false)}>
+                Cerrar
+              </button>
+            </header>
+            <form className="stack-form" onSubmit={handleCreatePermission}>
+              <label>
+                <span>Nombre de permiso</span>
+                <input
+                  value={permissionForm.nombre}
+                  onChange={(event) => setPermissionForm((current) => ({ ...current, nombre: event.target.value }))}
+                  required
+                />
+              </label>
+              <div className="permission-options">
+                <span>Personalizar permiso</span>
+                {permissionOptions.map((option) => (
+                  <label className="permission-check" key={option}>
+                    <input
+                      type="checkbox"
+                      checked={permissionForm.opciones.includes(option)}
+                      onChange={(event) => setPermissionForm((current) => ({
+                        ...current,
+                        opciones: event.target.checked
+                          ? [...current.opciones, option]
+                          : current.opciones.filter((item) => item !== option)
+                      }))}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
+              <button className="primary-button" type="submit">Crear permiso</button>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1150,13 +1329,8 @@ function TicketDetail({
     <article className="ticket-detail ticket-detail-full">
       <div className="ticket-main">
         <strong>{ticket.codigoTicket}</strong>
-        <h3>{ticket.titulo}</h3>
-        <p>{ticket.descripcion}</p>
-        <div className="ticket-badges">
-          <span>{ticket.estado}</span>
-          <span>{ticket.grupo}</span>
-          <span>{ticket.servicio}</span>
-        </div>
+        <p className="detail-label"><strong>Asunto:</strong> {ticket.titulo}</p>
+        <p className="detail-label"><strong>Descripcion:</strong> {ticket.descripcion}</p>
 
         <section className="ticket-comments">
           <h4>Comentarios</h4>
@@ -1230,7 +1404,7 @@ function TicketDetail({
               placeholder="Escribe una actualizacion del ticket"
               required
             />
-            <button className="secondary-button" type="submit">
+            <button className="secondary-button content-button" type="submit">
               Anadir comentario
             </button>
           </form>
@@ -1238,12 +1412,14 @@ function TicketDetail({
       </div>
 
       <div className="ticket-meta">
-        <span>Estado: {ticket.estado}</span>
-        <span>Grupo: {ticket.grupo}</span>
-        <span>Servicio: {ticket.servicio}</span>
-        <span>Categoria: {ticket.categoria}</span>
+        <div className="ticket-meta-box">
+          <span><span className={getStatusColor(ticket.estado)}></span> Estado: {ticket.estado}</span>
+          <span>Grupo: {ticket.grupo}</span>
+          <span>Servicio: {ticket.servicio}</span>
+          <span>Categoria: {ticket.categoria}</span>
+          <span>Asignado: {ticket.usuarioAsignado || "Sin asignar"}</span>
+        </div>
         <span>Creador: {ticket.usuario || "-"}</span>
-        <span>Asignado: {ticket.usuarioAsignado || "Sin asignar"}</span>
         {currentUserRole === "SUPER_ADMIN" && ticket.categoria === "Alta de usuario" ? (
           <button className="secondary-button" type="button" onClick={() => setShowCreateUserModal(true)}>
             Crear usuario desde ticket
@@ -1298,6 +1474,7 @@ function TicketsPage({
   currentUserRole,
   groups,
   tickets,
+  pageInfo,
   assignables,
   onRefresh,
   onChangeStatus,
@@ -1309,7 +1486,7 @@ function TicketsPage({
 }) {
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
   const catalogo = CATALOGOS_TICKETS[endpoint];
-  const servicios = Object.keys(catalogo);
+  const servicios = useMemo(() => Object.keys(catalogo), [catalogo]);
 
   const initialForm = useMemo(
     () => ({
@@ -1323,15 +1500,11 @@ function TicketsPage({
   );
 
   const [form, setForm] = useState(initialForm);
-  const [filters, setFilters] = useState({
-    estado: "ABIERTA",
-    grupoId: "",
-    fechaDesde: "",
-    fechaHasta: ""
-  });
+  const [filters, setFilters] = useState(DEFAULT_TICKET_FILTERS);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const selectedTicket =
     tickets.find((ticket) => ticket.id === selectedTicketId) || null;
@@ -1387,7 +1560,7 @@ function TicketsPage({
         grupoId: groups[0]?.id || ""
       });
       setMessage(`${singularTitle} creada correctamente`);
-      await onRefresh(filters);
+      await onRefresh(filters, currentPage);
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -1396,7 +1569,19 @@ function TicketsPage({
   async function handleFilterChange(field, value) {
     const nextFilters = { ...filters, [field]: value };
     setFilters(nextFilters);
-    await onRefresh(nextFilters);
+    setCurrentPage(0);
+    await onRefresh(nextFilters, 0);
+  }
+
+  async function handleResetFilters() {
+    setFilters(DEFAULT_TICKET_FILTERS);
+    setCurrentPage(0);
+    await onRefresh(DEFAULT_TICKET_FILTERS, 0);
+  }
+
+  async function handlePageChange(nextPage) {
+    setCurrentPage(nextPage);
+    await onRefresh(filters, nextPage);
   }
 
   return (
@@ -1517,6 +1702,7 @@ function TicketsPage({
                     value={filters.estado}
                     onChange={(event) => handleFilterChange("estado", event.target.value)}
                   >
+                    <option value="">Mostrar todos</option>
                     {ESTADOS_TICKET.map((estado) => (
                       <option key={estado} value={estado}>
                         {estado}
@@ -1554,7 +1740,7 @@ function TicketsPage({
                     onChange={(event) => handleFilterChange("fechaHasta", event.target.value)}
                   />
                 </label>
-                <button className="secondary-button" type="button" onClick={() => onRefresh(filters)}>
+                <button className="secondary-button aligned-filter-button" type="button" onClick={handleResetFilters}>
                   Recargar
                 </button>
               </div>
@@ -1587,6 +1773,27 @@ function TicketsPage({
                 ))
               )}
             </div>
+            {pageInfo.totalPages > 1 ? (
+              <div className="pagination-strip">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  Anterior
+                </button>
+                <span>Pagina {currentPage + 1} de {pageInfo.totalPages}</span>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage + 1 >= pageInfo.totalPages}
+                >
+                  Siguiente
+                </button>
+              </div>
+            ) : null}
           </section>
         </>
       )}
@@ -1607,6 +1814,8 @@ export default function App() {
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
   const [peticiones, setPeticiones] = useState([]);
+  const [incidenciasPageInfo, setIncidenciasPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0, size: 10 });
+  const [peticionesPageInfo, setPeticionesPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0, size: 10 });
   const [incidenciaAssignables, setIncidenciaAssignables] = useState([]);
   const [peticionAssignables, setPeticionAssignables] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
@@ -1624,8 +1833,8 @@ export default function App() {
     setUser(current);
   }
 
-  async function loadIncidencias(filters = { estado: "ABIERTA" }) {
-    const params = new URLSearchParams({ page: "0", size: "10" });
+  async function loadIncidencias(filters = DEFAULT_TICKET_FILTERS, page = 0) {
+    const params = new URLSearchParams({ page: String(page), size: "10" });
 
     if (filters.estado) {
       params.set("estado", filters.estado);
@@ -1642,6 +1851,12 @@ export default function App() {
 
     const data = await apiRequest(`/incidencias?${params.toString()}`);
     setIncidencias(data.content || []);
+    setIncidenciasPageInfo({
+      page: data.page || 0,
+      totalPages: data.totalPages || 0,
+      totalElements: data.totalElements || 0,
+      size: data.size || 10
+    });
   }
 
   async function loadIncidenciaAssignables() {
@@ -1649,8 +1864,8 @@ export default function App() {
     setIncidenciaAssignables(data);
   }
 
-  async function loadPeticiones(filters = { estado: "ABIERTA" }) {
-    const params = new URLSearchParams({ page: "0", size: "10" });
+  async function loadPeticiones(filters = DEFAULT_TICKET_FILTERS, page = 0) {
+    const params = new URLSearchParams({ page: String(page), size: "10" });
 
     if (filters.estado) {
       params.set("estado", filters.estado);
@@ -1667,6 +1882,12 @@ export default function App() {
 
     const data = await apiRequest(`/peticiones?${params.toString()}`);
     setPeticiones(data.content || []);
+    setPeticionesPageInfo({
+      page: data.page || 0,
+      totalPages: data.totalPages || 0,
+      totalElements: data.totalElements || 0,
+      size: data.size || 10
+    });
   }
 
   async function loadPeticionAssignables() {
@@ -1847,7 +2068,27 @@ export default function App() {
   async function updateAdminUser(userId, payload) {
     await apiRequest(`/admin/usuarios/${userId}`, {
       method: "PUT",
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        username: payload.username,
+        nombre: payload.nombre,
+        apellidos: payload.apellidos,
+        email: payload.email,
+        dni: payload.dni
+      })
+    });
+  }
+
+  async function updateAdminUserGroup(userId, grupoId) {
+    await apiRequest(`/admin/usuarios/${userId}/grupo`, {
+      method: "PUT",
+      body: JSON.stringify({ grupoId })
+    });
+  }
+
+  async function updateAdminUserActive(userId, activo) {
+    await apiRequest(`/admin/usuarios/${userId}/activo`, {
+      method: "PUT",
+      body: JSON.stringify({ activo })
     });
     await loadAdminData();
   }
@@ -1871,6 +2112,14 @@ export default function App() {
   async function removeAdminRolePermission(roleId, permisoId) {
     await apiRequest(`/admin/roles/${roleId}/permisos/${permisoId}`, {
       method: "DELETE"
+    });
+    await loadAdminData();
+  }
+
+  async function createAdminPermission(nombre, descripcion) {
+    await apiRequest("/admin/permisos", {
+      method: "POST",
+      body: JSON.stringify({ nombre, descripcion })
     });
     await loadAdminData();
   }
@@ -2000,6 +2249,9 @@ export default function App() {
                 onChangeUserPassword={changeAdminUserPassword}
                 onAssignRolePermission={assignAdminRolePermission}
                 onRemoveRolePermission={removeAdminRolePermission}
+                onUpdateUserGroup={updateAdminUserGroup}
+                onUpdateUserActive={updateAdminUserActive}
+                onCreatePermission={createAdminPermission}
               />
             </AppLayout>
           </AdminRoute>
@@ -2017,6 +2269,7 @@ export default function App() {
                 currentUserRole={user?.rol || ""}
                 groups={groups}
                 tickets={incidencias}
+                pageInfo={incidenciasPageInfo}
                 assignables={incidenciaAssignables}
                 onRefresh={loadIncidencias}
                 onChangeStatus={(id, estado) => updateTicketStatus("incidencias", id, estado)}
@@ -2048,6 +2301,7 @@ export default function App() {
                 currentUserRole={user?.rol || ""}
                 groups={groups}
                 tickets={peticiones}
+                pageInfo={peticionesPageInfo}
                 assignables={peticionAssignables}
                 onRefresh={loadPeticiones}
                 onChangeStatus={(id, estado) => updateTicketStatus("peticiones", id, estado)}
