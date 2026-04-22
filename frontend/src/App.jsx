@@ -181,7 +181,214 @@ function Dashboard({ incidencias, peticiones }) {
   );
 }
 
-function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStatus }) {
+function TicketCard({
+  ticket,
+  currentUsername,
+  assignables,
+  onAssign,
+  onChangeStatus,
+  onAddComment,
+  onUpdateComment,
+  onDeleteComment
+}) {
+  const [assignedUsername, setAssignedUsername] = useState(ticket.usuarioAsignado || "");
+  const [comment, setComment] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingContent, setEditingContent] = useState("");
+
+  useEffect(() => {
+    setAssignedUsername(ticket.usuarioAsignado || "");
+  }, [ticket.usuarioAsignado]);
+
+  async function handleAssign() {
+    setActionError("");
+
+    try {
+      await onAssign(ticket.id, assignedUsername);
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  async function handleCommentSubmit(event) {
+    event.preventDefault();
+    setActionError("");
+
+    try {
+      await onAddComment(ticket.id, comment);
+      setComment("");
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  async function handleUpdateComment(event) {
+    event.preventDefault();
+    setActionError("");
+
+    try {
+      await onUpdateComment(ticket.id, editingCommentId, editingContent);
+      setEditingCommentId(null);
+      setEditingContent("");
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  async function handleDeleteComment(commentId) {
+    setActionError("");
+
+    try {
+      await onDeleteComment(ticket.id, commentId);
+    } catch (requestError) {
+      setActionError(requestError.message);
+    }
+  }
+
+  return (
+    <article className="ticket-row">
+      <div className="ticket-main">
+        <strong>{ticket.codigoTicket}</strong>
+        <h3>{ticket.titulo}</h3>
+        <p>{ticket.descripcion}</p>
+        <div className="ticket-badges">
+          <span>{ticket.estado}</span>
+          <span>{ticket.grupo}</span>
+          <span>{ticket.servicio}</span>
+        </div>
+
+        <section className="ticket-comments">
+          <h4>Comentarios</h4>
+          {ticket.comentarios?.length ? (
+            <div className="comment-list">
+              {ticket.comentarios.map((comentario) => (
+                <article className="comment-item" key={comentario.id}>
+                  <p className="comment-meta">
+                    <strong>{comentario.autor}</strong> | {new Date(comentario.fechaCreacion).toLocaleString()}
+                  </p>
+                  {editingCommentId === comentario.id ? (
+                    <form className="comment-form" onSubmit={handleUpdateComment}>
+                      <textarea
+                        value={editingContent}
+                        onChange={(event) => setEditingContent(event.target.value)}
+                        required
+                      />
+                      <div className="comment-actions">
+                        <button className="secondary-button" type="submit">
+                          Guardar
+                        </button>
+                        <button
+                          className="secondary-button"
+                          type="button"
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditingContent("");
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <p>{comentario.contenido}</p>
+                      {comentario.autor === currentUsername ? (
+                        <div className="comment-actions">
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => {
+                              setEditingCommentId(comentario.id);
+                              setEditingContent(comentario.contenido);
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => handleDeleteComment(comentario.id)}
+                          >
+                            Borrar
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-inline">Sin comentarios todavia.</p>
+          )}
+
+          <form className="comment-form" onSubmit={handleCommentSubmit}>
+            <textarea
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Escribe una actualizacion del ticket"
+              required
+            />
+            <button className="secondary-button" type="submit">
+              Anadir comentario
+            </button>
+          </form>
+        </section>
+      </div>
+
+      <div className="ticket-meta">
+        <span>Creador: {ticket.usuario || "-"}</span>
+        <span>Asignado: {ticket.usuarioAsignado || "Sin asignar"}</span>
+        <select value={assignedUsername} onChange={(event) => setAssignedUsername(event.target.value)}>
+          <option value="">Sin asignar</option>
+          {assignables.map((assignable) => (
+            <option key={assignable.id} value={assignable.username}>
+              {assignable.username}
+            </option>
+          ))}
+        </select>
+        <button className="secondary-button" type="button" onClick={handleAssign}>
+          Guardar asignacion
+        </button>
+        {ticket.estado !== "CERRADA" ? (
+          <>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => onChangeStatus(ticket.id, "RESUELTA")}
+            >
+              Marcar RESUELTA
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => onChangeStatus(ticket.id, "CERRADA")}
+            >
+              Marcar CERRADA
+            </button>
+          </>
+        ) : null}
+        {actionError ? <p className="form-error">{actionError}</p> : null}
+      </div>
+    </article>
+  );
+}
+
+function TicketsPage({
+  title,
+  endpoint,
+  currentUsername,
+  groups,
+  tickets,
+  assignables,
+  onRefresh,
+  onChangeStatus,
+  onAssign,
+  onAddComment,
+  onUpdateComment,
+  onDeleteComment
+}) {
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
   const catalogo = CATALOGOS_TICKETS[endpoint];
   const servicios = Object.keys(catalogo);
@@ -365,36 +572,17 @@ function TicketsPage({ title, endpoint, groups, tickets, onRefresh, onChangeStat
             <p className="empty-state">No hay resultados para este filtro.</p>
           ) : (
             tickets.map((ticket) => (
-              <article className="ticket-row" key={`${endpoint}-${ticket.id}`}>
-                <div>
-                  <strong>{ticket.codigoTicket}</strong>
-                  <h3>{ticket.titulo}</h3>
-                  <p>{ticket.descripcion}</p>
-                </div>
-                <div className="ticket-meta">
-                  <span>{ticket.estado}</span>
-                  <span>{ticket.grupo}</span>
-                  <span>{ticket.servicio}</span>
-                  {ticket.estado !== "CERRADA" ? (
-                    <>
-                      <button
-                        className="secondary-button"
-                        type="button"
-                        onClick={() => onChangeStatus(ticket.id, "RESUELTA")}
-                      >
-                        Marcar RESUELTA
-                      </button>
-                      <button
-                        className="secondary-button"
-                        type="button"
-                        onClick={() => onChangeStatus(ticket.id, "CERRADA")}
-                      >
-                        Marcar CERRADA
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </article>
+              <TicketCard
+                key={`${endpoint}-${ticket.id}`}
+                ticket={ticket}
+                currentUsername={currentUsername}
+                assignables={assignables}
+                onAssign={onAssign}
+                onChangeStatus={onChangeStatus}
+                onAddComment={onAddComment}
+                onUpdateComment={onUpdateComment}
+                onDeleteComment={onDeleteComment}
+              />
             ))
           )}
         </div>
@@ -412,6 +600,8 @@ export default function App() {
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
   const [peticiones, setPeticiones] = useState([]);
+  const [incidenciaAssignables, setIncidenciaAssignables] = useState([]);
+  const [peticionAssignables, setPeticionAssignables] = useState([]);
 
   async function loadGroups() {
     const data = await apiRequest("/grupos");
@@ -434,6 +624,11 @@ export default function App() {
     setIncidencias(data.content || []);
   }
 
+  async function loadIncidenciaAssignables() {
+    const data = await apiRequest("/incidencias/asignables");
+    setIncidenciaAssignables(data);
+  }
+
   async function loadPeticiones(filters = { estado: "ABIERTA" }) {
     const params = new URLSearchParams({ page: "0", size: "10" });
 
@@ -445,6 +640,11 @@ export default function App() {
     setPeticiones(data.content || []);
   }
 
+  async function loadPeticionAssignables() {
+    const data = await apiRequest("/peticiones/asignables");
+    setPeticionAssignables(data);
+  }
+
   async function hydrateSession() {
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -454,7 +654,14 @@ export default function App() {
     }
 
     try {
-      await Promise.all([loadMe(), loadGroups(), loadIncidencias(), loadPeticiones()]);
+      await Promise.all([
+        loadMe(),
+        loadGroups(),
+        loadIncidencias(),
+        loadPeticiones(),
+        loadIncidenciaAssignables(),
+        loadPeticionAssignables()
+      ]);
     } catch (_error) {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);
@@ -478,7 +685,14 @@ export default function App() {
       });
 
       localStorage.setItem(TOKEN_KEY, data.token);
-      await Promise.all([loadMe(), loadGroups(), loadIncidencias(), loadPeticiones()]);
+      await Promise.all([
+        loadMe(),
+        loadGroups(),
+        loadIncidencias(),
+        loadPeticiones(),
+        loadIncidenciaAssignables(),
+        loadPeticionAssignables()
+      ]);
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setLoginError(requestError.message);
@@ -494,6 +708,8 @@ export default function App() {
     setGroups([]);
     setIncidencias([]);
     setPeticiones([]);
+    setIncidenciaAssignables([]);
+    setPeticionAssignables([]);
     navigate("/login", { replace: true });
   }
 
@@ -501,6 +717,61 @@ export default function App() {
     await apiRequest(`/${type}/${id}/estado`, {
       method: "PUT",
       body: JSON.stringify({ estado })
+    });
+
+    if (type === "incidencias") {
+      await loadIncidencias();
+      return;
+    }
+
+    await loadPeticiones();
+  }
+
+  async function assignTicket(type, id, usernameAsignado) {
+    await apiRequest(`/${type}/${id}/asignacion`, {
+      method: "PUT",
+      body: JSON.stringify({ usernameAsignado })
+    });
+
+    if (type === "incidencias") {
+      await loadIncidencias();
+      return;
+    }
+
+    await loadPeticiones();
+  }
+
+  async function addTicketComment(type, id, contenido) {
+    await apiRequest(`/${type}/${id}/comentarios`, {
+      method: "POST",
+      body: JSON.stringify({ contenido })
+    });
+
+    if (type === "incidencias") {
+      await loadIncidencias();
+      return;
+    }
+
+    await loadPeticiones();
+  }
+
+  async function updateTicketComment(type, id, commentId, contenido) {
+    await apiRequest(`/${type}/${id}/comentarios/${commentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ contenido })
+    });
+
+    if (type === "incidencias") {
+      await loadIncidencias();
+      return;
+    }
+
+    await loadPeticiones();
+  }
+
+  async function deleteTicketComment(type, id, commentId) {
+    await apiRequest(`/${type}/${id}/comentarios/${commentId}`, {
+      method: "DELETE"
     });
 
     if (type === "incidencias") {
@@ -543,10 +814,18 @@ export default function App() {
               <TicketsPage
                 title="Incidencias"
                 endpoint="incidencias"
+                currentUsername={user.username}
                 groups={groups}
                 tickets={incidencias}
+                assignables={incidenciaAssignables}
                 onRefresh={loadIncidencias}
                 onChangeStatus={(id, estado) => updateTicketStatus("incidencias", id, estado)}
+                onAssign={(id, usernameAsignado) => assignTicket("incidencias", id, usernameAsignado)}
+                onAddComment={(id, contenido) => addTicketComment("incidencias", id, contenido)}
+                onUpdateComment={(id, commentId, contenido) =>
+                  updateTicketComment("incidencias", id, commentId, contenido)
+                }
+                onDeleteComment={(id, commentId) => deleteTicketComment("incidencias", id, commentId)}
               />
             </AppLayout>
           </ProtectedRoute>
@@ -560,10 +839,18 @@ export default function App() {
               <TicketsPage
                 title="Peticiones"
                 endpoint="peticiones"
+                currentUsername={user.username}
                 groups={groups}
                 tickets={peticiones}
+                assignables={peticionAssignables}
                 onRefresh={loadPeticiones}
                 onChangeStatus={(id, estado) => updateTicketStatus("peticiones", id, estado)}
+                onAssign={(id, usernameAsignado) => assignTicket("peticiones", id, usernameAsignado)}
+                onAddComment={(id, contenido) => addTicketComment("peticiones", id, contenido)}
+                onUpdateComment={(id, commentId, contenido) =>
+                  updateTicketComment("peticiones", id, commentId, contenido)
+                }
+                onDeleteComment={(id, commentId) => deleteTicketComment("peticiones", id, commentId)}
               />
             </AppLayout>
           </ProtectedRoute>

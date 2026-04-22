@@ -305,12 +305,64 @@ textarea {
   background: #fff;
 }
 
+.ticket-main {
+  display: grid;
+  gap: 12px;
+}
+
 .ticket-row strong {
   color: #ea5f3f;
 }
 
 .ticket-meta {
   align-content: start;
+}
+
+.ticket-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ticket-comments {
+  display: grid;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #d8e0e3;
+}
+
+.ticket-comments h4,
+.comment-item p {
+  margin: 0;
+}
+
+.comment-list,
+.comment-form {
+  display: grid;
+  gap: 10px;
+}
+
+.comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.comment-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f3f7f6;
+  border: 1px solid #d8e0e3;
+}
+
+.comment-meta {
+  font-size: 0.9rem;
+  color: #52616e;
+}
+
+.empty-inline {
+  margin: 0;
+  color: #52616e;
 }
 
 @media (max-width: 940px) {

@@ -1,6 +1,10 @@
 package com.astropi.astropi.controller;
 
+import com.astropi.astropi.controller.dto.common.AsignarTicketRequest;
+import com.astropi.astropi.controller.dto.common.ComentarioRequest;
+import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
+import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
 import com.astropi.astropi.controller.dto.peticion.EstadoPeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionResponse;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.astropi.astropi.controller.dto.common.MensajeResponse;
 
 /**
  * Controlador de peticiones.
@@ -101,5 +106,63 @@ public class PeticionController {
         );
 
         return ResponseEntity.ok(peticion);
+    }
+
+    @PutMapping("/{id}/asignacion")
+    public ResponseEntity<PeticionResponse> asignarPeticion(@PathVariable Long id,
+                                                            @Valid @RequestBody AsignarTicketRequest request,
+                                                            Authentication authentication) {
+
+        PeticionResponse peticion = peticionService.asignarPeticion(
+                id,
+                request.getUsernameAsignado(),
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(peticion);
+    }
+
+    @GetMapping("/asignables")
+    public ResponseEntity<List<UsuarioAsignableResponse>> obtenerUsuariosAsignables(Authentication authentication) {
+        return ResponseEntity.ok(peticionService.obtenerUsuariosAsignables(authentication.getName()));
+    }
+
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<ComentarioResponse> agregarComentario(@PathVariable Long id,
+                                                                @Valid @RequestBody ComentarioRequest request,
+                                                                Authentication authentication) {
+
+        ComentarioResponse comentario = peticionService.agregarComentario(
+                id,
+                request.getContenido(),
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(comentario);
+    }
+
+    @PutMapping("/{id}/comentarios/{comentarioId}")
+    public ResponseEntity<ComentarioResponse> actualizarComentario(@PathVariable Long id,
+                                                                   @PathVariable Long comentarioId,
+                                                                   @Valid @RequestBody ComentarioRequest request,
+                                                                   Authentication authentication) {
+
+        ComentarioResponse comentario = peticionService.actualizarComentario(
+                id,
+                comentarioId,
+                request.getContenido(),
+                authentication.getName()
+        );
+
+        return ResponseEntity.ok(comentario);
+    }
+
+    @DeleteMapping("/{id}/comentarios/{comentarioId}")
+    public ResponseEntity<MensajeResponse> eliminarComentario(@PathVariable Long id,
+                                                              @PathVariable Long comentarioId,
+                                                              Authentication authentication) {
+
+        peticionService.eliminarComentario(id, comentarioId, authentication.getName());
+        return ResponseEntity.ok(new MensajeResponse("Comentario borrado correctamente"));
     }
 }
