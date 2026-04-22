@@ -112,6 +112,19 @@ public class AdminController {
         return ResponseEntity.ok(permiso);
     }
 
+    @PutMapping("/permisos/{id}")
+    public ResponseEntity<PermisoResponse> actualizarPermiso(
+            @PathVariable Long id,
+            @Valid @RequestBody PermisoRequest request) {
+        PermisoResponse permiso = permisoService.actualizarPermiso(
+                id,
+                request.getNombre(),
+                request.getDescripcion()
+        );
+
+        return ResponseEntity.ok(permiso);
+    }
+
     @DeleteMapping("/permisos/{id}")
     public ResponseEntity<MensajeResponse> eliminarPermiso(@PathVariable Long id) {
 

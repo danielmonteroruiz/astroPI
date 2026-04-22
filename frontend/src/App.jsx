@@ -394,6 +394,9 @@ function LoginPage({
           )}
         </div>
       </section>
+      <footer className="app-footer login-footer">
+        <p>Copyright © 2026 Daniel Montero. Todos los derechos reservados.</p>
+      </footer>
     </main>
   );
 }
@@ -434,6 +437,9 @@ function AppLayout({ user, onLogout, children }) {
         </button>
       </header>
       {children}
+      <footer className="app-footer">
+        <p>Copyright © 2026 Daniel Montero. Todos los derechos reservados.</p>
+      </footer>
     </main>
   );
 }
@@ -455,7 +461,9 @@ function AdminPage({
   onRemoveRolePermission,
   onUpdateUserGroup,
   onUpdateUserActive,
-  onCreatePermission
+  onCreatePermission,
+  onUpdatePermission,
+  onDeletePermission
 }) {
   const [groupName, setGroupName] = useState("");
   const [message, setMessage] = useState("");
@@ -470,6 +478,7 @@ function AdminPage({
   const [userSearch, setUserSearch] = useState("");
   const [userPage, setUserPage] = useState(0);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [editingPermissionId, setEditingPermissionId] = useState(null);
   const [permissionForm, setPermissionForm] = useState({
     nombre: "",
     opciones: []
@@ -659,10 +668,15 @@ function AdminPage({
       const descripcion = permissionForm.opciones.length
         ? `Opciones: ${permissionForm.opciones.join(", ")}`
         : null;
-      await onCreatePermission(permissionForm.nombre, descripcion);
+      if (editingPermissionId) {
+        await onUpdatePermission(editingPermissionId, permissionForm.nombre, descripcion);
+      } else {
+        await onCreatePermission(permissionForm.nombre, descripcion);
+      }
       setPermissionForm({ nombre: "", opciones: [] });
+      setEditingPermissionId(null);
       setShowPermissionModal(false);
-      setMessage("Permiso creado correctamente");
+      setMessage(editingPermissionId ? "Permiso actualizado correctamente" : "Permiso creado correctamente");
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -799,7 +813,7 @@ function AdminPage({
                     </select>
                   </label>
                   <button
-                    className="secondary-button compact-button"
+                    className="secondary-button compact-button content-button"
                     type="button"
                     onClick={() => handleAssignRolePermission(rol.id)}
                   >
@@ -813,14 +827,51 @@ function AdminPage({
             <article className="admin-row">
               <div className="ticket-main admin-row-main">
                 <strong>Permisos disponibles</strong>
-                <p>{permisos.map((permiso) => permiso.nombre).join(", ")}</p>
+                <div className="admin-permission-list">
+                  {permisos.map((permiso) => (
+                    <span className="admin-permission-pill" key={`permiso-${permiso.id}`}>
+                      {permiso.nombre}
+                      <button
+                        className="icon-button small-icon-button"
+                        type="button"
+                        title="Editar permiso"
+                        onClick={() => {
+                          setEditingPermissionId(permiso.id);
+                          setPermissionForm({
+                            nombre: permiso.nombre,
+                            opciones: (permiso.descripcion || "")
+                              .replace("Opciones:", "")
+                              .split(",")
+                              .map((item) => item.trim())
+                              .filter(Boolean)
+                          });
+                          setShowPermissionModal(true);
+                        }}
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        className="icon-button small-icon-button"
+                        type="button"
+                        title="Borrar permiso"
+                        onClick={() => onDeletePermission(permiso.id)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="admin-actions-row">
                 <button
                   className="secondary-button icon-button"
                   type="button"
                   title="Crear permiso"
-                  onClick={() => setShowPermissionModal(true)}
+                  onClick={() => {
+                    setEditingPermissionId(null);
+                    setPermissionForm({ nombre: "", opciones: [] });
+                    setShowPermissionModal(true);
+                  }}
                 >
                   <PlusIcon />
                 </button>
@@ -1008,13 +1059,13 @@ function AdminPage({
             </button>
           </div>
         ) : null}
-        <button className="secondary-button" type="button" onClick={onRefresh}>Recargar admin</button>
+        <button className="secondary-button content-button" type="button" onClick={onRefresh}>Recargar admin</button>
       </section>
       {showPermissionModal ? (
         <div className="modal-overlay">
           <section className="draggable-modal admin-permission-modal">
             <header className="modal-header">
-              <strong>Crear permiso</strong>
+              <strong>{editingPermissionId ? "Editar permiso" : "Crear permiso"}</strong>
               <button className="secondary-button" type="button" onClick={() => setShowPermissionModal(false)}>
                 Cerrar
               </button>
@@ -1046,7 +1097,9 @@ function AdminPage({
                   </label>
                 ))}
               </div>
-              <button className="primary-button" type="submit">Crear permiso</button>
+              <button className="primary-button content-button" type="submit">
+                {editingPermissionId ? "Guardar permiso" : "Crear permiso"}
+              </button>
             </form>
           </section>
         </div>
@@ -1204,18 +1257,28 @@ function CreateUserFromTicketModal({
 }
 
 function Dashboard({ incidencias, peticiones }) {
+  function buildStatusCounts(items) {
+    return {
+      abiertas: items.filter((item) => item.estado === "ABIERTA").length,
+      enProceso: items.filter((item) => item.estado === "EN_PROCESO").length,
+      cerradas: items.filter((item) => item.estado === "CERRADA").length
+    };
+  }
+
   const cards = [
     {
       title: "Incidencias",
       value: incidencias.length,
-      subtitle: "tickets cargados en esta sesion",
+      subtitle: "Incidencias cargadas en esta sesion",
+      counts: buildStatusCounts(incidencias),
       image:
         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
     },
     {
       title: "Peticiones",
       value: peticiones.length,
-      subtitle: "peticiones visibles ahora mismo",
+      subtitle: "Peticiones cargadas en esta sesion",
+      counts: buildStatusCounts(peticiones),
       image:
         "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80"
     }
@@ -1230,6 +1293,11 @@ function Dashboard({ incidencias, peticiones }) {
             <p>{card.title}</p>
             <strong>{card.value}</strong>
             <span>{card.subtitle}</span>
+            <div className="metric-status-row">
+              <span><span className="status-dot open"></span>{card.counts.abiertas}</span>
+              <span><span className="status-dot in-progress"></span>{card.counts.enProceso}</span>
+              <span><span className="status-dot closed"></span>{card.counts.cerradas}</span>
+            </div>
           </div>
         </article>
       ))}
@@ -1505,9 +1573,15 @@ function TicketsPage({
   const [error, setError] = useState("");
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [sortOrder, setSortOrder] = useState("desc");
 
   const selectedTicket =
     tickets.find((ticket) => ticket.id === selectedTicketId) || null;
+  const visibleTickets = [...tickets].sort((left, right) => {
+    const leftValue = new Date(left.fechaCreacion).getTime();
+    const rightValue = new Date(right.fechaCreacion).getTime();
+    return sortOrder === "asc" ? leftValue - rightValue : rightValue - leftValue;
+  });
 
   useEffect(() => {
     setForm((current) => ({
@@ -1740,6 +1814,15 @@ function TicketsPage({
                     onChange={(event) => handleFilterChange("fechaHasta", event.target.value)}
                   />
                 </label>
+                {endpoint === "peticiones" ? (
+                  <label className="filter-field">
+                    <span>Fecha</span>
+                    <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
+                      <option value="desc">Mas recientes</option>
+                      <option value="asc">Mas antiguas</option>
+                    </select>
+                  </label>
+                ) : null}
                 <button className="secondary-button aligned-filter-button" type="button" onClick={handleResetFilters}>
                   Recargar
                 </button>
@@ -1750,7 +1833,7 @@ function TicketsPage({
               {tickets.length === 0 ? (
                 <p className="empty-state">No hay resultados para este filtro.</p>
               ) : (
-                tickets.map((ticket) => (
+                visibleTickets.map((ticket) => (
                   <button
                     key={`${endpoint}-${ticket.id}`}
                     className="ticket-summary"
@@ -2124,6 +2207,21 @@ export default function App() {
     await loadAdminData();
   }
 
+  async function updateAdminPermission(permisoId, nombre, descripcion) {
+    await apiRequest(`/admin/permisos/${permisoId}`, {
+      method: "PUT",
+      body: JSON.stringify({ nombre, descripcion })
+    });
+    await loadAdminData();
+  }
+
+  async function deleteAdminPermission(permisoId) {
+    await apiRequest(`/admin/permisos/${permisoId}`, {
+      method: "DELETE"
+    });
+    await loadAdminData();
+  }
+
   async function updateTicketStatus(type, id, estado) {
     await apiRequest(`/${type}/${id}/estado`, {
       method: "PUT",
@@ -2252,6 +2350,8 @@ export default function App() {
                 onUpdateUserGroup={updateAdminUserGroup}
                 onUpdateUserActive={updateAdminUserActive}
                 onCreatePermission={createAdminPermission}
+                onUpdatePermission={updateAdminPermission}
+                onDeletePermission={deleteAdminPermission}
               />
             </AppLayout>
           </AdminRoute>

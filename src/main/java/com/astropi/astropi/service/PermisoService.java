@@ -53,6 +53,24 @@ public class PermisoService {
     }
 
     @Transactional
+    public PermisoResponse actualizarPermiso(Long permisoId, String nombre, String descripcion) {
+
+        Permiso permiso = permisoRepository.findById(permisoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Permiso no encontrado"));
+
+        permisoRepository.findByNombre(nombre)
+                .filter(permisoExistente -> !permisoExistente.getId().equals(permisoId))
+                .ifPresent(permisoExistente -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un permiso con ese nombre");
+                });
+
+        permiso.setNombre(nombre);
+        permiso.setDescripcion(normalizarTextoOpcional(descripcion));
+
+        return mapToPermisoResponse(permisoRepository.save(permiso));
+    }
+
+    @Transactional
     public void eliminarPermiso(Long permisoId) {
 
         Permiso permiso = permisoRepository.findById(permisoId)

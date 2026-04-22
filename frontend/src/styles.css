@@ -65,7 +65,7 @@ a {
 }
 
 .brand-logo-login {
-  width: min(220px, 55%);
+  width: min(165px, 41%);
   margin-bottom: 16px;
 }
 
@@ -167,6 +167,10 @@ textarea {
   font-weight: 600;
 }
 
+.content-button {
+  width: fit-content;
+}
+
 .nav-button {
   background: rgba(255, 255, 255, 0.6);
   color: #17313a;
@@ -226,7 +230,23 @@ textarea {
 }
 
 .brand-logo-header {
-  width: 120px;
+  width: 90px;
+}
+
+.app-footer {
+  padding: 12px 24px 18px;
+  text-align: center;
+  color: #52616e;
+  font-size: 0.86rem;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.login-footer {
+  color: rgba(244, 248, 247, 0.82);
+  padding-top: 0;
 }
 
 .main-nav {
@@ -354,6 +374,21 @@ textarea {
   color: rgba(255, 255, 255, 0.8);
 }
 
+.metric-status-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.metric-status-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
 .content-grid {
   grid-template-columns: minmax(300px, 380px) minmax(260px, 340px) minmax(0, 1fr);
   align-items: start;
@@ -432,6 +467,12 @@ textarea {
 .admin-row-main strong,
 .admin-row-main p {
   margin: 0;
+}
+
+.admin-row-main p {
+  font-size: 0.82rem;
+  font-style: italic;
+  color: #6b7780;
 }
 
 .admin-user-form {
