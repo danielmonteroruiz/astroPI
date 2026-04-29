@@ -1,22 +1,27 @@
 package com.astropi.astropi.service;
 
 import com.astropi.astropi.model.EstadoIncidencia;
+import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Incidencia;
+import com.astropi.astropi.model.Rol;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
 import com.astropi.astropi.repository.IncidenciaRepository;
 import com.astropi.astropi.repository.UsuarioRepository;
+import org.springframework.data.jpa.domain.Specification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +69,9 @@ class IncidenciaServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 LocalDate.of(2026, 4, 22),
                 LocalDate.of(2026, 4, 21),
                 0,
@@ -83,6 +91,9 @@ class IncidenciaServiceTest {
 
         assertThatThrownBy(() -> incidenciaService.obtenerIncidenciasUsuarioYGrupo(
                 "usuario1",
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -112,6 +123,9 @@ class IncidenciaServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 0,
                 101
         ))
@@ -119,10 +133,44 @@ class IncidenciaServiceTest {
                 .hasMessageContaining("size debe estar entre 1 y 100");
     }
 
+    @Test
+    void usuarioDemoNoDeberiaCrearIncidencias() {
+
+        Usuario usuario = crearUsuarioDemo();
+        when(usuarioRepository.findByUsername("demo")).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> incidenciaService.crearIncidencia(
+                "Titulo",
+                "Descripcion",
+                "Software",
+                "Instalacion fallida",
+                1L,
+                "demo"
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("El usuario demo solo puede consultar incidencias");
+    }
+
     private Usuario crearUsuario(String username) {
 
         Usuario usuario = new Usuario();
         usuario.setUsername(username);
+
+        return usuario;
+    }
+
+    private Usuario crearUsuarioDemo() {
+
+        Rol rol = new Rol();
+        rol.setNombre("DEMO_READ_ONLY");
+
+        Grupo grupo = new Grupo();
+        grupo.setId(1L);
+        grupo.setNombre("Demo");
+
+        Usuario usuario = crearUsuario("demo");
+        usuario.setRol(rol);
+        usuario.setGrupo(grupo);
 
         return usuario;
     }

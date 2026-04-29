@@ -2,10 +2,14 @@ package com.astropi.astropi.controller;
 
 import com.astropi.astropi.config.CorsProperties;
 import com.astropi.astropi.config.SecurityConfig;
+import com.astropi.astropi.controller.dto.auth.UserResponse;
 import com.astropi.astropi.security.CustomUserDetailsService;
 import com.astropi.astropi.security.JwtAuthenticationEntryPoint;
 import com.astropi.astropi.security.JwtAuthenticationFilter;
 import com.astropi.astropi.security.JwtUtil;
+import com.astropi.astropi.repository.UsuarioRepository;
+import com.astropi.astropi.service.PeticionService;
+import com.astropi.astropi.service.PasswordResetService;
 import com.astropi.astropi.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +51,15 @@ class AuthControllerTest {
 
     @MockitoBean
     private UsuarioService usuarioService;
+
+    @MockitoBean
+    private PeticionService peticionService;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
+
+    @MockitoBean
+    private UsuarioRepository usuarioRepository;
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
@@ -112,11 +125,17 @@ class AuthControllerTest {
     void deberiaPermitirAuthMeConUsuarioAutenticado() throws Exception {
 
         // Comprueba que /auth/me devuelve username y rol cuando el usuario esta autenticado.
+        UserResponse response = new UserResponse();
+        response.setUsername("usuario1");
+        response.setRol("USER");
+
+        when(usuarioService.obtenerPerfilActual("usuario1")).thenReturn(response);
+
         mockMvc.perform(get("/auth/me")
                         .with(user("usuario1").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("usuario1"))
-                .andExpect(jsonPath("$.role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.rol").value("USER"));
     }
 
     @Test

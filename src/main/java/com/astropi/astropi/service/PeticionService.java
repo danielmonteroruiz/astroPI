@@ -2,6 +2,7 @@ package com.astropi.astropi.service;
 
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
+import com.astropi.astropi.controller.dto.common.TicketResumenResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
 import com.astropi.astropi.controller.dto.auth.ForgotPasswordRequest;
 import com.astropi.astropi.controller.dto.auth.RegisterRequest;
@@ -58,6 +59,7 @@ public class PeticionService {
                                   String username) {
 
         Usuario usuario = obtenerUsuarioPorUsername(username);
+        validarUsuarioNoDemo(usuario);
         Grupo grupo = obtenerGrupoPorId(grupoId);
 
         Peticion peticion = new Peticion(titulo, descripcion, usuario);
@@ -126,6 +128,26 @@ public class PeticionService {
         return peticiones.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TicketResumenResponse obtenerResumenPeticiones(String username) {
+        Usuario usuario = obtenerUsuarioPorUsername(username);
+
+        long total = peticionRepository.count(crearFiltrosPeticiones(
+                usuario, null, null, null, null, null, null, null, null, null
+        ));
+        long abiertas = peticionRepository.count(crearFiltrosPeticiones(
+                usuario, EstadoPeticion.ABIERTA, null, null, null, null, null, null, null, null
+        ));
+        long enProceso = peticionRepository.count(crearFiltrosPeticiones(
+                usuario, EstadoPeticion.EN_PROCESO, null, null, null, null, null, null, null, null
+        ));
+        long cerradas = peticionRepository.count(crearFiltrosPeticiones(
+                usuario, EstadoPeticion.CERRADA, null, null, null, null, null, null, null, null
+        ));
+
+        return new TicketResumenResponse(total, abiertas, enProceso, cerradas);
     }
 
     @Transactional(readOnly = true)
@@ -380,7 +402,7 @@ public class PeticionService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (!esSuperAdmin(usuario)) {
+            if (!esSuperAdmin(usuario) && !esDemoSoloLectura(usuario)) {
                 Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
 
                 if (usuario.getGrupo() != null) {
@@ -467,6 +489,10 @@ public class PeticionService {
     }
 
     private boolean puedeGestionarPeticion(Usuario usuario, Peticion peticion) {
+        if (esDemoSoloLectura(usuario)) {
+            return false;
+        }
+
         if (esSuperAdmin(usuario)) {
             return true;
         }
@@ -494,6 +520,16 @@ public class PeticionService {
 
     private boolean esSuperAdmin(Usuario usuario) {
         return usuario.getRol() != null && "SUPER_ADMIN".equals(usuario.getRol().getNombre());
+    }
+
+    private boolean esDemoSoloLectura(Usuario usuario) {
+        return usuario.getRol() != null && "DEMO_READ_ONLY".equals(usuario.getRol().getNombre());
+    }
+
+    private void validarUsuarioNoDemo(Usuario usuario) {
+        if (esDemoSoloLectura(usuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario demo solo puede consultar peticiones");
+        }
     }
 
     private void validarCambioEstado(EstadoPeticion estadoActual, EstadoPeticion nuevoEstado) {

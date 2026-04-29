@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -61,9 +62,12 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/index.html", "/assets/**", "/astropi-logo.png").permitAll()
+                        .requestMatchers("/login", "/dashboard", "/admin", "/incidencias", "/peticiones", "/reset-password").permitAll()
                         .requestMatchers("/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/auth/reset-password/validate").permitAll()
                         .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/admin/**").access(tieneAccesoLecturaAdmin())
                         .requestMatchers("/admin/usuarios/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_USUARIOS"))
                         .requestMatchers("/admin/grupos/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_GRUPOS"))
                         .requestMatchers("/admin/roles/**").access(tieneRolSuperAdminOPermiso("GESTIONAR_PERMISOS"))
@@ -98,6 +102,15 @@ public class SecurityConfig {
 
     private WebExpressionAuthorizationManager tieneRolSuperAdminOPermiso(String permiso) {
         return new WebExpressionAuthorizationManager("hasRole('SUPER_ADMIN') or hasAuthority('" + permiso + "')");
+    }
+
+    private WebExpressionAuthorizationManager tieneAccesoLecturaAdmin() {
+        return new WebExpressionAuthorizationManager(
+                "hasRole('SUPER_ADMIN') or hasRole('DEMO_READ_ONLY') "
+                        + "or hasAuthority('GESTIONAR_USUARIOS') "
+                        + "or hasAuthority('GESTIONAR_GRUPOS') "
+                        + "or hasAuthority('GESTIONAR_PERMISOS')"
+        );
     }
 
     /**

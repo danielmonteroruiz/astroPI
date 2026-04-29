@@ -1,7 +1,9 @@
 package com.astropi.astropi.service;
 
 import com.astropi.astropi.model.EstadoPeticion;
+import com.astropi.astropi.model.Grupo;
 import com.astropi.astropi.model.Peticion;
+import com.astropi.astropi.model.Rol;
 import com.astropi.astropi.model.Usuario;
 import com.astropi.astropi.repository.GrupoRepository;
 import com.astropi.astropi.repository.PeticionRepository;
@@ -64,6 +66,9 @@ class PeticionServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 LocalDate.of(2026, 4, 22),
                 LocalDate.of(2026, 4, 21),
                 0,
@@ -83,6 +88,9 @@ class PeticionServiceTest {
 
         assertThatThrownBy(() -> peticionService.obtenerPeticionesUsuarioYGrupo(
                 "usuario1",
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -112,6 +120,9 @@ class PeticionServiceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 0,
                 101
         ))
@@ -119,10 +130,44 @@ class PeticionServiceTest {
                 .hasMessageContaining("size debe estar entre 1 y 100");
     }
 
+    @Test
+    void usuarioDemoNoDeberiaCrearPeticiones() {
+
+        Usuario usuario = crearUsuarioDemo();
+        when(usuarioRepository.findByUsername("demo")).thenReturn(Optional.of(usuario));
+
+        assertThatThrownBy(() -> peticionService.crearPeticion(
+                "Titulo",
+                "Descripcion",
+                "Accesos",
+                "Alta de permisos",
+                1L,
+                "demo"
+        ))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("El usuario demo solo puede consultar peticiones");
+    }
+
     private Usuario crearUsuario(String username) {
 
         Usuario usuario = new Usuario();
         usuario.setUsername(username);
+
+        return usuario;
+    }
+
+    private Usuario crearUsuarioDemo() {
+
+        Rol rol = new Rol();
+        rol.setNombre("DEMO_READ_ONLY");
+
+        Grupo grupo = new Grupo();
+        grupo.setId(1L);
+        grupo.setNombre("Demo");
+
+        Usuario usuario = crearUsuario("demo");
+        usuario.setRol(rol);
+        usuario.setGrupo(grupo);
 
         return usuario;
     }

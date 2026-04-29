@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 const TOKEN_KEY = "astropi_token";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const ESTADOS_TICKET = ["ABIERTA", "EN_PROCESO", "PARADA", "RESUELTA", "CERRADA"];
 const ESTADOS_GESTION = ["ABIERTA", "EN_PROCESO", "CERRADA"];
 const DEFAULT_TICKET_FILTERS = {
@@ -212,7 +212,7 @@ function AdminRoute({ user, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.rol !== "SUPER_ADMIN") {
+  if (user.rol !== "SUPER_ADMIN" && user.rol !== "DEMO_READ_ONLY") {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -532,7 +532,8 @@ function ResetPasswordPage({ onResetPassword, loading, error, successMessage }) 
 
 function AppLayout({ user, onLogout, children }) {
   const location = useLocation();
-  const adminLinks = user?.rol === "SUPER_ADMIN" ? [{ to: "/admin", label: "Admin" }] : [];
+  const canSeeAdmin = user?.rol === "SUPER_ADMIN" || user?.rol === "DEMO_READ_ONLY";
+  const adminLinks = canSeeAdmin ? [{ to: "/admin", label: "Admin" }] : [];
   const links = [
     { to: "/dashboard", label: "Resumen" },
     { to: "/incidencias", label: "Incidencias" },
@@ -592,8 +593,10 @@ function AdminPage({
   onUpdateUserActive,
   onCreatePermission,
   onUpdatePermission,
-  onDeletePermission
+  onDeletePermission,
+  currentUserRole
 }) {
+  const isReadOnlyDemo = currentUserRole === "DEMO_READ_ONLY";
   const [groupName, setGroupName] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -661,6 +664,9 @@ function AdminPage({
 
   async function handleCreateGroup(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -675,6 +681,9 @@ function AdminPage({
 
   async function handleCreateUser(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -700,6 +709,9 @@ function AdminPage({
   }
 
   async function handleDeleteGroup(groupId) {
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -713,6 +725,9 @@ function AdminPage({
 
   async function handleUpdateGroup(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -727,6 +742,9 @@ function AdminPage({
   }
 
   async function handleDeleteUser(userId) {
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -740,6 +758,9 @@ function AdminPage({
 
   async function handleUpdateUser(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -757,6 +778,9 @@ function AdminPage({
 
   async function handleChangePassword(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -770,6 +794,9 @@ function AdminPage({
   }
 
   async function handleAssignRolePermission(roleId) {
+    if (isReadOnlyDemo) {
+      return;
+    }
     const permisoId = rolePermissionSelection[roleId];
 
     if (!permisoId) {
@@ -790,6 +817,9 @@ function AdminPage({
 
   async function handleCreatePermission(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -812,6 +842,9 @@ function AdminPage({
   }
 
   async function handleRemoveRolePermission(roleId, permisoId) {
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -833,9 +866,9 @@ function AdminPage({
         <form className="admin-group-form" onSubmit={handleCreateGroup}>
           <label className="admin-group-input">
             <span>Nuevo grupo</span>
-            <input value={groupName} onChange={(event) => setGroupName(event.target.value)} required />
+            <input value={groupName} onChange={(event) => setGroupName(event.target.value)} required disabled={isReadOnlyDemo} />
           </label>
-          <button className="primary-button compact-button" type="submit">Crear grupo</button>
+          <button className="primary-button compact-button" type="submit" disabled={isReadOnlyDemo}>Crear grupo</button>
         </form>
         <div className="ticket-list">
           {grupos.map((grupo) => (
@@ -870,25 +903,29 @@ function AdminPage({
                 )}
               </div>
               <div className="admin-actions-row">
-                <button
-                  className="secondary-button icon-button"
-                  type="button"
-                  title="Editar grupo"
-                  onClick={() => {
-                    setEditingGroupId(grupo.id);
-                    setEditingGroupName(grupo.nombre);
-                  }}
-                >
-                  <EditIcon />
-                </button>
-                <button
-                  className="secondary-button icon-button"
-                  type="button"
-                  title="Borrar grupo"
-                  onClick={() => handleDeleteGroup(grupo.id)}
-                >
-                  <TrashIcon />
-                </button>
+                {!isReadOnlyDemo ? (
+                  <>
+                    <button
+                      className="secondary-button icon-button"
+                      type="button"
+                      title="Editar grupo"
+                      onClick={() => {
+                        setEditingGroupId(grupo.id);
+                        setEditingGroupName(grupo.nombre);
+                      }}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      className="secondary-button icon-button"
+                      type="button"
+                      title="Borrar grupo"
+                      onClick={() => handleDeleteGroup(grupo.id)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </>
+                ) : null}
               </div>
             </article>
           ))}
@@ -906,7 +943,7 @@ function AdminPage({
                       return (
                         <span className="admin-permission-pill" key={`${rol.id}-${permisoNombre}`}>
                           {permisoNombre}
-                          {permiso ? (
+                          {permiso && !isReadOnlyDemo ? (
                             <button
                               className="icon-button small-icon-button"
                               type="button"
@@ -923,6 +960,7 @@ function AdminPage({
                     <p>Sin permisos asignados</p>
                   )}
                 </div>
+                {!isReadOnlyDemo ? (
                 <div className="admin-role-permission-form">
                   <label className="admin-group-input">
                     <span>Añadir permiso</span>
@@ -949,6 +987,7 @@ function AdminPage({
                     Añadir
                   </button>
                 </div>
+                ) : null}
               </div>
             </article>
           ))}
@@ -960,6 +999,7 @@ function AdminPage({
                   {permisos.map((permiso) => (
                     <span className="admin-permission-pill" key={`permiso-${permiso.id}`}>
                       {permiso.nombre}
+                      {!isReadOnlyDemo ? (
                       <button
                         className="icon-button small-icon-button"
                         type="button"
@@ -979,6 +1019,8 @@ function AdminPage({
                       >
                         <EditIcon />
                       </button>
+                      ) : null}
+                      {!isReadOnlyDemo ? (
                       <button
                         className="icon-button small-icon-button"
                         type="button"
@@ -987,10 +1029,12 @@ function AdminPage({
                       >
                         <TrashIcon />
                       </button>
+                      ) : null}
                     </span>
                   ))}
                 </div>
               </div>
+              {!isReadOnlyDemo ? (
               <div className="admin-actions-row">
                 <button
                   className="secondary-button icon-button"
@@ -1005,6 +1049,7 @@ function AdminPage({
                   <PlusIcon />
                 </button>
               </div>
+              ) : null}
             </article>
           ) : null}
         </div>
@@ -1017,35 +1062,35 @@ function AdminPage({
         </div>
         <form className="stack-form admin-user-form" onSubmit={handleCreateUser}>
           <div className="admin-form-grid">
-            <label><span>Username</span><input value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} required /></label>
-            <label><span>Nombre</span><input value={userForm.nombre} onChange={(event) => setUserForm((current) => ({ ...current, nombre: event.target.value }))} required /></label>
-            <label><span>Apellidos</span><input value={userForm.apellidos} onChange={(event) => setUserForm((current) => ({ ...current, apellidos: event.target.value }))} required /></label>
-            <label><span>Email</span><input type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} /></label>
-            <label><span>DNI</span><input value={userForm.dni} onChange={(event) => setUserForm((current) => ({ ...current, dni: event.target.value }))} required /></label>
-            <label><span>Password</span><input type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} required /></label>
+            <label><span>Username</span><input value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} required disabled={isReadOnlyDemo} /></label>
+            <label><span>Nombre</span><input value={userForm.nombre} onChange={(event) => setUserForm((current) => ({ ...current, nombre: event.target.value }))} required disabled={isReadOnlyDemo} /></label>
+            <label><span>Apellidos</span><input value={userForm.apellidos} onChange={(event) => setUserForm((current) => ({ ...current, apellidos: event.target.value }))} required disabled={isReadOnlyDemo} /></label>
+            <label><span>Email</span><input type="email" value={userForm.email} onChange={(event) => setUserForm((current) => ({ ...current, email: event.target.value }))} disabled={isReadOnlyDemo} /></label>
+            <label><span>DNI</span><input value={userForm.dni} onChange={(event) => setUserForm((current) => ({ ...current, dni: event.target.value }))} required disabled={isReadOnlyDemo} /></label>
+            <label><span>Password</span><input type="password" value={userForm.password} onChange={(event) => setUserForm((current) => ({ ...current, password: event.target.value }))} required disabled={isReadOnlyDemo} /></label>
           </div>
           <div className="admin-select-row">
             <label>
               <span>Rol</span>
-              <select value={userForm.rolId} onChange={(event) => setUserForm((current) => ({ ...current, rolId: event.target.value }))} required>
+              <select value={userForm.rolId} onChange={(event) => setUserForm((current) => ({ ...current, rolId: event.target.value }))} required disabled={isReadOnlyDemo}>
                 {roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}
               </select>
             </label>
             <label>
               <span>Grupo</span>
-              <select value={userForm.grupoId} onChange={(event) => setUserForm((current) => ({ ...current, grupoId: event.target.value }))} required>
+              <select value={userForm.grupoId} onChange={(event) => setUserForm((current) => ({ ...current, grupoId: event.target.value }))} required disabled={isReadOnlyDemo}>
                 {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nombre}</option>)}
               </select>
             </label>
             <label>
               <span>Activo</span>
-              <select value={String(userForm.activo)} onChange={(event) => setUserForm((current) => ({ ...current, activo: event.target.value === "true" }))}>
+              <select value={String(userForm.activo)} onChange={(event) => setUserForm((current) => ({ ...current, activo: event.target.value === "true" }))} disabled={isReadOnlyDemo}>
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
               </select>
             </label>
           </div>
-          <button className="primary-button admin-create-button" type="submit">Crear</button>
+          <button className="primary-button admin-create-button" type="submit" disabled={isReadOnlyDemo}>Crear</button>
         </form>
 
         {message ? <p className="form-success">{message}</p> : null}
@@ -1115,6 +1160,7 @@ function AdminPage({
                 )}
               </div>
               <div className="admin-user-side">
+                {!isReadOnlyDemo ? (
                 <div className="admin-actions-row admin-actions-row-right">
                   <button
                     className="secondary-button icon-button"
@@ -1152,6 +1198,7 @@ function AdminPage({
                     <TrashIcon />
                   </button>
                 </div>
+                ) : null}
                 {passwordForm.userId === usuario.id ? (
                   <form className="stack-form admin-password-form" onSubmit={handleChangePassword}>
                     <input
@@ -1385,29 +1432,21 @@ function CreateUserFromTicketModal({
   );
 }
 
-function Dashboard({ incidencias, peticiones }) {
-  function buildStatusCounts(items) {
-    return {
-      abiertas: items.filter((item) => item.estado === "ABIERTA").length,
-      enProceso: items.filter((item) => item.estado === "EN_PROCESO").length,
-      cerradas: items.filter((item) => item.estado === "CERRADA").length
-    };
-  }
-
+function Dashboard({ incidenciasResumen, peticionesResumen }) {
   const cards = [
     {
       title: "Incidencias",
-      value: incidencias.length,
+      value: incidenciasResumen.total,
       subtitle: "Incidencias cargadas en esta sesion",
-      counts: buildStatusCounts(incidencias),
+      counts: incidenciasResumen,
       image:
         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
     },
     {
       title: "Peticiones",
-      value: peticiones.length,
+      value: peticionesResumen.total,
       subtitle: "Peticiones cargadas en esta sesion",
-      counts: buildStatusCounts(peticiones),
+      counts: peticionesResumen,
       image:
         "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80"
     }
@@ -1463,6 +1502,7 @@ function TicketDetail({
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingContent, setEditingContent] = useState("");
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const isReadOnlyDemo = currentUserRole === "DEMO_READ_ONLY";
 
   useEffect(() => {
     setAssignedUsername(ticket.usuarioAsignado || "");
@@ -1587,7 +1627,7 @@ function TicketDetail({
                   ) : (
                     <>
                       <p>{comentario.contenido}</p>
-                      {comentario.autor === currentUsername ? (
+                      {!isReadOnlyDemo && comentario.autor === currentUsername ? (
                         <div className="comment-actions">
                           <button
                             className="secondary-button"
@@ -1617,17 +1657,19 @@ function TicketDetail({
             <p className="empty-inline">Sin comentarios todavia.</p>
           )}
 
-          <form className="comment-form" onSubmit={handleCommentSubmit}>
-            <textarea
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-              placeholder="Escribe una actualizacion del ticket"
-              required
-            />
-            <button className="secondary-button content-button" type="submit">
-              Anadir comentario
-            </button>
-          </form>
+          {!isReadOnlyDemo ? (
+            <form className="comment-form" onSubmit={handleCommentSubmit}>
+              <textarea
+                value={comment}
+                onChange={(event) => setComment(event.target.value)}
+                placeholder="Escribe una actualizacion del ticket"
+                required
+              />
+              <button className="secondary-button content-button" type="submit">
+                Anadir comentario
+              </button>
+            </form>
+          ) : null}
         </section>
       </div>
 
@@ -1654,30 +1696,34 @@ function TicketDetail({
             Enviar enlace de reseteo
           </button>
         ) : null}
-        <label>
-          <span>Nuevo estado</span>
-          <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
-            {ESTADOS_GESTION.map((estado) => (
-              <option key={estado} value={estado}>
-                {estado}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="secondary-button" type="button" onClick={handleStatusUpdate}>
-          Confirmar cambio
-        </button>
-        <select value={assignedUsername} onChange={(event) => setAssignedUsername(event.target.value)}>
-          <option value="">Sin asignar</option>
-          {assignables.map((assignable) => (
-            <option key={assignable.id} value={assignable.username}>
-              {assignable.username}
-            </option>
-          ))}
-        </select>
-        <button className="secondary-button" type="button" onClick={handleAssign}>
-          Guardar asignacion
-        </button>
+        {!isReadOnlyDemo ? (
+          <>
+            <label>
+              <span>Nuevo estado</span>
+              <select value={nextStatus} onChange={(event) => setNextStatus(event.target.value)}>
+                {ESTADOS_GESTION.map((estado) => (
+                  <option key={estado} value={estado}>
+                    {estado}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="secondary-button" type="button" onClick={handleStatusUpdate}>
+              Confirmar cambio
+            </button>
+            <select value={assignedUsername} onChange={(event) => setAssignedUsername(event.target.value)}>
+              <option value="">Sin asignar</option>
+              {assignables.map((assignable) => (
+                <option key={assignable.id} value={assignable.username}>
+                  {assignable.username}
+                </option>
+              ))}
+            </select>
+            <button className="secondary-button" type="button" onClick={handleAssign}>
+              Guardar asignacion
+            </button>
+          </>
+        ) : null}
         {actionMessage ? <p className="form-success">{actionMessage}</p> : null}
         {actionError ? <p className="form-error">{actionError}</p> : null}
       </div>
@@ -1716,6 +1762,7 @@ function TicketsPage({
   onSendResetLinkFromTicket
 }) {
   const singularTitle = endpoint === "incidencias" ? "incidencia" : "peticion";
+  const isReadOnlyDemo = currentUserRole === "DEMO_READ_ONLY";
   const catalogo = CATALOGOS_TICKETS[endpoint];
   const servicios = useMemo(() => Object.keys(catalogo), [catalogo]);
   const categoriasDisponibles = useMemo(
@@ -1784,6 +1831,9 @@ function TicketsPage({
 
   async function handleCreate(event) {
     event.preventDefault();
+    if (isReadOnlyDemo) {
+      return;
+    }
     setMessage("");
     setError("");
 
@@ -1855,81 +1905,86 @@ function TicketsPage({
         </section>
       ) : (
         <>
-          <form className="editor-panel" onSubmit={handleCreate}>
-            <div className="section-heading">
-              <p className="eyebrow">{title}</p>
-              <h2>Crear {singularTitle}</h2>
-            </div>
-            <label>
-              <span>Titulo</span>
-              <input
-                type="text"
-                value={form.titulo}
-                onChange={(event) => updateField("titulo", event.target.value)}
-                required
-              />
-            </label>
-            <label>
-              <span>Descripcion</span>
-              <textarea
-                value={form.descripcion}
-                onChange={(event) => updateField("descripcion", event.target.value)}
-                required
-              />
-            </label>
-            <div className="field-row">
+            <form className="editor-panel" onSubmit={handleCreate}>
+              <div className="section-heading">
+                <p className="eyebrow">{title}</p>
+                <h2>Crear {singularTitle}</h2>
+              </div>
               <label>
-                <span>Servicio</span>
-                <select
-                  value={form.servicio}
-                  onChange={(event) => updateField("servicio", event.target.value)}
+                <span>Titulo</span>
+                <input
+                  type="text"
+                  value={form.titulo}
+                  onChange={(event) => updateField("titulo", event.target.value)}
                   required
-                >
-                  {servicios.map((servicio) => (
-                    <option key={servicio} value={servicio}>
-                      {servicio}
-                    </option>
-                  ))}
-                </select>
+                  disabled={isReadOnlyDemo}
+                />
               </label>
               <label>
-                <span>Categoria</span>
-                <select
-                  value={form.categoria}
-                  onChange={(event) => updateField("categoria", event.target.value)}
+                <span>Descripcion</span>
+                <textarea
+                  value={form.descripcion}
+                  onChange={(event) => updateField("descripcion", event.target.value)}
                   required
-                >
-                  {(catalogo[form.servicio] || []).map((categoria) => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
-                  ))}
-                </select>
+                  disabled={isReadOnlyDemo}
+                />
               </label>
-            </div>
-            <label>
-              <span>Grupo</span>
-              <select
-                value={form.grupoId}
-                onChange={(event) => updateField("grupoId", event.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  Selecciona un grupo
-                </option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.nombre}
+              <div className="field-row">
+                <label>
+                  <span>Servicio</span>
+                  <select
+                    value={form.servicio}
+                    onChange={(event) => updateField("servicio", event.target.value)}
+                    required
+                    disabled={isReadOnlyDemo}
+                  >
+                    {servicios.map((servicio) => (
+                      <option key={servicio} value={servicio}>
+                        {servicio}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Categoria</span>
+                  <select
+                    value={form.categoria}
+                    onChange={(event) => updateField("categoria", event.target.value)}
+                    required
+                    disabled={isReadOnlyDemo}
+                  >
+                    {(catalogo[form.servicio] || []).map((categoria) => (
+                      <option key={categoria} value={categoria}>
+                        {categoria}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>Grupo</span>
+                <select
+                  value={form.grupoId}
+                  onChange={(event) => updateField("grupoId", event.target.value)}
+                  required
+                  disabled={isReadOnlyDemo}
+                >
+                  <option value="" disabled>
+                    Selecciona un grupo
                   </option>
-                ))}
-              </select>
-            </label>
-            {message ? <p className="form-success">{message}</p> : null}
-            {error ? <p className="form-error">{error}</p> : null}
-            <button className="primary-button" type="submit">
-              Guardar
-            </button>
-          </form>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {message ? <p className="form-success">{message}</p> : null}
+              {error ? <p className="form-error">{error}</p> : null}
+              <button className="primary-button" type="submit" disabled={isReadOnlyDemo}>
+                Guardar
+              </button>
+            </form>
 
           <section className="list-panel ticket-list-screen">
             <div className="section-heading section-heading-inline">
@@ -2101,6 +2156,8 @@ export default function App() {
   const [groups, setGroups] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
   const [peticiones, setPeticiones] = useState([]);
+  const [incidenciasResumen, setIncidenciasResumen] = useState({ total: 0, abiertas: 0, enProceso: 0, cerradas: 0 });
+  const [peticionesResumen, setPeticionesResumen] = useState({ total: 0, abiertas: 0, enProceso: 0, cerradas: 0 });
   const [incidenciasPageInfo, setIncidenciasPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0, size: 10 });
   const [peticionesPageInfo, setPeticionesPageInfo] = useState({ page: 0, totalPages: 0, totalElements: 0, size: 10 });
   const [incidenciaAssignables, setIncidenciaAssignables] = useState([]);
@@ -2118,6 +2175,16 @@ export default function App() {
   async function loadMe() {
     const current = await apiRequest("/auth/me");
     setUser(current);
+  }
+
+  async function loadDashboardSummary() {
+    const [incidenciasData, peticionesData] = await Promise.all([
+      apiRequest("/incidencias/resumen"),
+      apiRequest("/peticiones/resumen")
+    ]);
+
+    setIncidenciasResumen(incidenciasData);
+    setPeticionesResumen(peticionesData);
   }
 
   async function loadIncidencias(filters = DEFAULT_TICKET_FILTERS, page = 0) {
@@ -2214,6 +2281,23 @@ export default function App() {
     setAdminPermisos(permisos);
   }
 
+  async function loadInitialData(currentUser) {
+    const initialRequests = [
+      loadGroups(),
+      loadIncidencias(),
+      loadPeticiones(),
+      loadDashboardSummary(),
+      loadIncidenciaAssignables(),
+      loadPeticionAssignables()
+    ];
+
+    if (currentUser.rol === "SUPER_ADMIN" || currentUser.rol === "DEMO_READ_ONLY") {
+      initialRequests.push(loadAdminData());
+    }
+
+    await Promise.allSettled(initialRequests);
+  }
+
   async function hydrateSession() {
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -2226,17 +2310,7 @@ export default function App() {
       const currentUser = await apiRequest("/auth/me");
       setUser(currentUser);
 
-      await Promise.all([
-        loadGroups(),
-        loadIncidencias(),
-        loadPeticiones(),
-        loadIncidenciaAssignables(),
-        loadPeticionAssignables()
-      ]);
-
-      if (currentUser.rol === "SUPER_ADMIN") {
-        await loadAdminData();
-      }
+      await loadInitialData(currentUser);
     } catch (_error) {
       localStorage.removeItem(TOKEN_KEY);
       setUser(null);
@@ -2263,17 +2337,7 @@ export default function App() {
       const currentUser = await apiRequest("/auth/me");
       setUser(currentUser);
 
-      await Promise.all([
-        loadGroups(),
-        loadIncidencias(),
-        loadPeticiones(),
-        loadIncidenciaAssignables(),
-        loadPeticionAssignables()
-      ]);
-
-      if (currentUser.rol === "SUPER_ADMIN") {
-        await loadAdminData();
-      }
+      await loadInitialData(currentUser);
       navigate("/dashboard", { replace: true });
     } catch (requestError) {
       setLoginError(requestError.message);
@@ -2345,6 +2409,8 @@ export default function App() {
     setGroups([]);
     setIncidencias([]);
     setPeticiones([]);
+    setIncidenciasResumen({ total: 0, abiertas: 0, enProceso: 0, cerradas: 0 });
+    setPeticionesResumen({ total: 0, abiertas: 0, enProceso: 0, cerradas: 0 });
     setIncidenciaAssignables([]);
     setPeticionAssignables([]);
     setAdminUsers([]);
@@ -2584,7 +2650,7 @@ export default function App() {
         element={
           <ProtectedRoute user={user}>
             <AppLayout user={user} onLogout={handleLogout}>
-              <Dashboard incidencias={incidencias} peticiones={peticiones} />
+              <Dashboard incidenciasResumen={incidenciasResumen} peticionesResumen={peticionesResumen} />
             </AppLayout>
           </ProtectedRoute>
         }
@@ -2614,6 +2680,7 @@ export default function App() {
                 onCreatePermission={createAdminPermission}
                 onUpdatePermission={updateAdminPermission}
                 onDeletePermission={deleteAdminPermission}
+                currentUserRole={user?.rol || ""}
               />
             </AppLayout>
           </AdminRoute>

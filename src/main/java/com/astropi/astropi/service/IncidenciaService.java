@@ -2,6 +2,7 @@ package com.astropi.astropi.service;
 
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
+import com.astropi.astropi.controller.dto.common.TicketResumenResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaResponse;
 import com.astropi.astropi.model.ComentarioIncidencia;
@@ -56,6 +57,7 @@ public class IncidenciaService {
                                       String username) {
 
         Usuario usuario = obtenerUsuarioPorUsername(username);
+        validarUsuarioNoDemo(usuario);
         Grupo grupo = obtenerGrupoPorId(grupoId);
 
         Incidencia incidencia = new Incidencia(titulo, descripcion, usuario);
@@ -73,6 +75,26 @@ public class IncidenciaService {
         return incidencias.stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TicketResumenResponse obtenerResumenIncidencias(String username) {
+        Usuario usuario = obtenerUsuarioPorUsername(username);
+
+        long total = incidenciaRepository.count(crearFiltrosIncidencias(
+                usuario, null, null, null, null, null, null, null, null, null
+        ));
+        long abiertas = incidenciaRepository.count(crearFiltrosIncidencias(
+                usuario, EstadoIncidencia.ABIERTA, null, null, null, null, null, null, null, null
+        ));
+        long enProceso = incidenciaRepository.count(crearFiltrosIncidencias(
+                usuario, EstadoIncidencia.EN_PROCESO, null, null, null, null, null, null, null, null
+        ));
+        long cerradas = incidenciaRepository.count(crearFiltrosIncidencias(
+                usuario, EstadoIncidencia.CERRADA, null, null, null, null, null, null, null, null
+        ));
+
+        return new TicketResumenResponse(total, abiertas, enProceso, cerradas);
     }
 
     @Transactional(readOnly = true)
@@ -303,7 +325,7 @@ public class IncidenciaService {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (!esSuperAdmin(usuario)) {
+            if (!esSuperAdmin(usuario) && !esDemoSoloLectura(usuario)) {
                 Predicate esCreador = criteriaBuilder.equal(root.get("usuario").get("username"), usuario.getUsername());
 
                 if (usuario.getGrupo() != null) {
@@ -390,6 +412,10 @@ public class IncidenciaService {
     }
 
     private boolean puedeGestionarIncidencia(Usuario usuario, Incidencia incidencia) {
+        if (esDemoSoloLectura(usuario)) {
+            return false;
+        }
+
         if (esSuperAdmin(usuario)) {
             return true;
         }
@@ -417,6 +443,16 @@ public class IncidenciaService {
 
     private boolean esSuperAdmin(Usuario usuario) {
         return usuario.getRol() != null && "SUPER_ADMIN".equals(usuario.getRol().getNombre());
+    }
+
+    private boolean esDemoSoloLectura(Usuario usuario) {
+        return usuario.getRol() != null && "DEMO_READ_ONLY".equals(usuario.getRol().getNombre());
+    }
+
+    private void validarUsuarioNoDemo(Usuario usuario) {
+        if (esDemoSoloLectura(usuario)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario demo solo puede consultar incidencias");
+        }
     }
 
     private void validarCambioEstado(EstadoIncidencia estadoActual, EstadoIncidencia nuevoEstado) {

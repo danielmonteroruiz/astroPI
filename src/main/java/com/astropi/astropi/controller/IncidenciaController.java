@@ -4,6 +4,7 @@ import com.astropi.astropi.controller.dto.common.AsignarTicketRequest;
 import com.astropi.astropi.controller.dto.common.ComentarioRequest;
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
+import com.astropi.astropi.controller.dto.common.TicketResumenResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
 import com.astropi.astropi.controller.dto.incidencia.EstadoIncidenciaRequest;
 import com.astropi.astropi.controller.dto.incidencia.IncidenciaRequest;
@@ -60,6 +61,11 @@ public class IncidenciaController {
         List<IncidenciaResponse> incidencias = incidenciaService.obtenerMisIncidencias(username);
 
         return ResponseEntity.ok(incidencias);
+    }
+
+    @GetMapping("/resumen")
+    public ResponseEntity<TicketResumenResponse> obtenerResumen(Authentication authentication) {
+        return ResponseEntity.ok(incidenciaService.obtenerResumenIncidencias(authentication.getName()));
     }
 
     @GetMapping

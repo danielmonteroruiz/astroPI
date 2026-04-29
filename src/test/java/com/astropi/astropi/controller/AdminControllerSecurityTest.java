@@ -4,12 +4,14 @@ import com.astropi.astropi.config.CorsProperties;
 import com.astropi.astropi.config.SecurityConfig;
 import com.astropi.astropi.controller.dto.admin.PermisoResponse;
 import com.astropi.astropi.controller.dto.grupo.GrupoResponse;
+import com.astropi.astropi.repository.UsuarioRepository;
 import com.astropi.astropi.security.CustomUserDetailsService;
 import com.astropi.astropi.security.JwtAuthenticationEntryPoint;
 import com.astropi.astropi.security.JwtAuthenticationFilter;
 import com.astropi.astropi.security.JwtUtil;
 import com.astropi.astropi.service.GrupoService;
 import com.astropi.astropi.service.PermisoService;
+import com.astropi.astropi.service.PasswordResetService;
 import com.astropi.astropi.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +47,12 @@ class AdminControllerSecurityTest {
 
     @MockitoBean
     private PermisoService permisoService;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
+
+    @MockitoBean
+    private UsuarioRepository usuarioRepository;
 
     @MockitoBean
     private JwtUtil jwtUtil;

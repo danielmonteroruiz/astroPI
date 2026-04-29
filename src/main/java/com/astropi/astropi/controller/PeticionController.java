@@ -4,6 +4,7 @@ import com.astropi.astropi.controller.dto.common.AsignarTicketRequest;
 import com.astropi.astropi.controller.dto.common.ComentarioRequest;
 import com.astropi.astropi.controller.dto.common.ComentarioResponse;
 import com.astropi.astropi.controller.dto.common.PagedResponse;
+import com.astropi.astropi.controller.dto.common.TicketResumenResponse;
 import com.astropi.astropi.controller.dto.common.UsuarioAsignableResponse;
 import com.astropi.astropi.controller.dto.peticion.EstadoPeticionRequest;
 import com.astropi.astropi.controller.dto.peticion.PeticionRequest;
@@ -60,6 +61,11 @@ public class PeticionController {
         List<PeticionResponse> peticiones = peticionService.obtenerMisPeticiones(username);
 
         return ResponseEntity.ok(peticiones);
+    }
+
+    @GetMapping("/resumen")
+    public ResponseEntity<TicketResumenResponse> obtenerResumen(Authentication authentication) {
+        return ResponseEntity.ok(peticionService.obtenerResumenPeticiones(authentication.getName()));
     }
 
     @GetMapping

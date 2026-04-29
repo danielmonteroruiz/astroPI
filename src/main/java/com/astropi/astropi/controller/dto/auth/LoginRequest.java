@@ -13,7 +13,7 @@ public class LoginRequest {
     private String username;
 
     @NotBlank(message = "La password es obligatoria")
-    @Size(min = 6, max = 100, message = "La password debe tener entre 6 y 100 caracteres")
+    @Size(min = 4, max = 100, message = "La password debe tener entre 4 y 100 caracteres")
     private String password;
 
     public String getUsername(){
